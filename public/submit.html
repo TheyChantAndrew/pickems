@@ -1,15 +1,25 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<link rel="icon" href="data:,"><title>Week 5 Picks · Fam Bash Pickems</title><meta name="theme-color" content="#c2410c">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%83%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<title>Week 5 Picks · Fam Bash Pickems</title><meta name="theme-color" content="#1a0b08">
+<meta name="description" content="Make your Week 5 Fam Bash Pickems picks. Pick every game + tiebreaker right here. No sign-up. Each pick locks at kickoff. $10 entry.">
+<meta property="og:type" content="website"><meta property="og:site_name" content="Fam Bash Pickems">
+<meta property="og:title" content="🎃 Make your Week 5 picks · Fam Bash Pickems">
+<meta property="og:description" content="Pick every game + tiebreaker right here. No sign-up. Each pick locks at kickoff. $10 entry.">
+<meta property="og:image" content="https://fambash-pickems.vercel.app/og-image.png"><meta property="og:url" content="https://fambash-pickems.vercel.app/submit">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Make your Week 5 picks · Fam Bash Pickems">
+<meta name="twitter:description" content="Pick every game + tiebreaker right here. No sign-up. Each pick locks at kickoff."><meta name="twitter:image" content="https://fambash-pickems.vercel.app/og-image.png">
 <style>
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{font-family:-apple-system,system-ui,Segoe UI,Roboto,sans-serif;margin:0;background:#140c18;color:#f6efe4;
  background-image:radial-gradient(circle at 8% 0,#3b2150 0,transparent 26%),radial-gradient(circle at 100% 0,#5c2a0e 0,transparent 24%)}
 header{background:linear-gradient(100deg,#1a0b08 0%,#c2410c 48%,#7c2d12 100%);color:#fff8ee;padding:16px 16px 14px;border-bottom:4px solid #f59e0b}
-header .in{max-width:920px;margin:auto}
+header .in{max-width:920px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 h1{margin:0;font-size:22px;letter-spacing:.2px} .meta{font-size:13px;opacity:.92;margin-top:4px}
-.meta a{color:#fff8ee}
+.back{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:999px;background:#1a0b0899;border:1px solid #fff8ee88;color:#fff8ee;text-decoration:none;font-weight:700;font-size:15px;white-space:nowrap}
+.back:hover,.back:focus-visible{background:#1a0b08}
 main{padding:12px;max-width:920px;margin:auto}
 h2{font-size:17px;margin:20px 2px 4px;color:#fdba74} .hint{font-size:13px;color:#d6c4a8;margin:0 2px 10px}
 .card{background:#24162e;border-radius:12px;box-shadow:0 1px 3px #0008;border:1px solid #3d2a4a;padding:14px}
@@ -18,13 +28,19 @@ h2{font-size:17px;margin:20px 2px 4px;color:#fdba74} .hint{font-size:13px;color:
 .row{display:grid;gap:12px} label{display:block;font-size:13px;font-weight:600;color:#fdba74;margin-bottom:5px}
 input[type=text],input[type=number]{width:100%;font-size:17px;padding:12px;border-radius:10px;border:1px solid #5b4170;background:#170d1d;color:#fff8ee;outline:none}
 input:focus{border-color:#f59e0b;box-shadow:0 0 0 3px #f59e0b33}
+input[aria-invalid=true]{border-color:#f87171;box-shadow:0 0 0 3px #f8717140}
+input:disabled{opacity:.5;border-style:dashed;cursor:not-allowed} #who.off label{color:#a8957d} #who.off .small{opacity:.6}
+.ferr{color:#fecaca;font-size:13.5px;font-weight:700;margin-top:6px} .okline{color:#86efac;font-size:13.5px;font-weight:700;margin-top:8px}
 .small{font-size:12px;color:#c9b59a;margin-top:5px}
-details{margin-top:12px;font-size:14px} summary{cursor:pointer;color:#fdba74;font-weight:600;padding:4px 0}
+details{margin-top:8px;font-size:14px} summary{cursor:pointer;color:#fdba74;font-weight:600;min-height:44px;display:flex;align-items:center;gap:6px;padding:0 2px}
+summary{list-style:none} summary::-webkit-details-marker{display:none} summary::before{content:"▸";font-size:13px} details[open]>summary::before{content:"▾"}
 .coderow{display:flex;gap:8px;margin-top:8px} .coderow input{text-transform:uppercase;letter-spacing:3px;font-weight:700}
-.btn2{flex:none;font-size:15px;font-weight:700;border-radius:10px;border:1px solid #f59e0b;background:transparent;color:#fdba74;padding:0 14px;cursor:pointer}
+.btn2{flex:none;font-size:15px;font-weight:700;border-radius:10px;border:1px solid #f59e0b;background:transparent;color:#fdba74;padding:0 14px;cursor:pointer;min-height:44px}
+.btn2:disabled{opacity:.5;cursor:not-allowed}
 .games{display:grid;gap:10px}
 .game{background:#24162e;border:1px solid #3d2a4a;border-radius:12px;padding:10px;box-shadow:0 1px 3px #0006}
-.game.done{border-color:#4d7c0f66}
+.game.done{border-color:#22c55e66}
+.game.missing{border-color:#f87171;box-shadow:0 0 0 2px #f8717166} .gerr{color:#fecaca;font-size:13.5px;font-weight:700;margin:8px 2px 0}
 .gtop{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;color:#d6c4a8;margin:0 2px 8px}
 .when{font-weight:600;color:#f6efe4} .st{white-space:nowrap} .badge{background:#7c2d12;color:#ffedd5;border-radius:6px;padding:1px 6px;font-size:11px;margin-left:6px;font-weight:700;white-space:nowrap;display:inline-block}
 .teams{display:grid;grid-template-columns:1fr auto 1fr;align-items:stretch;gap:8px}
@@ -34,20 +50,32 @@ details{margin-top:12px;font-size:14px} summary{cursor:pointer;color:#fdba74;fon
 .team b{font-size:20px;letter-spacing:.5px} .team small{font-size:12px;color:#cdb9d9;margin-top:1px}
 .team:hover{border-color:#f59e0b88} .team:disabled{cursor:default}
 body.soon .team{opacity:.75}
-.team.on{background:linear-gradient(180deg,#f59e0b,#ea580c);border-color:#fbbf24;color:#1a0b08;box-shadow:0 2px 8px #ea580c55}
-.team.on small{color:#3b1606} .team.on b::before{content:"✓ "}
+.team.on{background:#15803d;border-color:#4ade80;color:#fff;box-shadow:0 2px 8px #16a34a66}
+.team.on small{color:#f0fdf4} .team.on b::before{content:"✓ "}
 .game.locked{opacity:.55} .game.locked .team{cursor:not-allowed;border-style:dashed} .game.locked .st{color:#fca5a5}
 .tb input{font-size:22px;font-weight:700;text-align:center;max-width:160px}
 .tbrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .bar{position:sticky;bottom:0;margin:16px -12px 0;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:#140c18ee;
- backdrop-filter:blur(6px);border-top:1px solid #3d2a4a;display:flex;align-items:center;gap:12px}
+ -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);border-top:1px solid #3d2a4a;display:flex;align-items:center;gap:12px}
 .prog{flex:1;font-size:14px;color:#d6c4a8} .prog b{color:#fff8ee;font-size:16px}
-.pbar{height:6px;background:#3d2a4a;border-radius:4px;margin-top:5px;overflow:hidden} .pbar i{display:block;height:100%;background:#f59e0b;width:0;transition:width .2s}
-.submit{font-size:17px;font-weight:800;border:0;border-radius:12px;padding:14px 22px;background:linear-gradient(180deg,#f59e0b,#ea580c);color:#1a0b08;cursor:pointer;min-width:140px}
-.submit:disabled{opacity:.6;cursor:wait}
+.pbar{height:6px;background:#3d2a4a;border-radius:4px;margin-top:5px;overflow:hidden} .pbar i{display:block;height:100%;background:#4ade80;width:0;transition:width .2s}
+.submit{font-size:17px;font-weight:800;border:2px solid #4ade80;border-radius:12px;padding:12px 22px;background:#15803d;color:#fff;cursor:pointer;min-width:140px;min-height:52px;box-shadow:0 2px 0 #0b5d2a}
+.submit:hover,.submit:focus-visible{background:#166534}
+.submit:disabled{opacity:.6;cursor:not-allowed}
 .msg{border-radius:12px;padding:14px 16px;margin:14px 0 0;font-size:15px;display:none}
 .msg.ok{display:block;background:#14532d;border:1px solid #22c55e;color:#f0fdf4}
 .msg.err{display:block;background:#7f1d1d;border:1px solid #f87171;color:#fff1f2}
+.msg h3{margin:0 0 4px;font-size:19px} .msg h3:focus{outline:none}
+.oklbl{margin-top:8px} .okcode{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.copy{border-color:#86efac;color:#dcfce7}
+.board{display:flex;align-items:center;justify-content:center;min-height:48px;margin-top:12px;border-radius:12px;background:#f0fdf4;color:#14532d;font-weight:800;font-size:16px;text-decoration:none}
+.board:hover,.board:focus-visible{background:#dcfce7}
+.topnote{border-radius:12px;padding:12px 14px;font-size:14.5px;margin:0 0 12px;line-height:1.4}
+.topnote b{font-size:16px} .topnote.partial{background:#2a1a12;border:2px solid #f59e0b;color:#fde68a} .topnote.partial b{color:#fff8ee}
+.topnote.closed{background:#7f1d1d;border:2px solid #f87171;color:#fff1f2}
+.tbtn{display:flex;align-items:center;justify-content:center;min-height:48px;margin-top:10px;border-radius:10px;background:#fff1f2;color:#7f1d1d;font-weight:800;text-decoration:none}
+.lockedwrap{margin-top:10px;background:#1d1226;border:1px dashed #5b4170;border-radius:12px;padding:0 10px}
+.lockedwrap>summary{color:#d6c4a8} .lockedwrap[open]{padding-bottom:10px} .lockedwrap .games{margin-top:4px}
 .code{display:inline-block;font-size:28px;font-weight:800;letter-spacing:6px;background:#052e16;border:2px dashed #86efac;border-radius:10px;padding:4px 14px;margin:6px 0}
 .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 footer{font-size:12px;color:#a8957d;text-align:center;padding:18px 12px 28px}
@@ -58,41 +86,43 @@ footer{font-size:12px;color:#a8957d;text-align:center;padding:18px 12px 28px}
  .bar{margin:18px 0 0;border:1px solid #3d2a4a;border-radius:14px;bottom:12px}
 }
 </style></head><body class="live">
-<header><div class="in"><h1>🎃 Week 5 Picks</h1>
-<div class="meta">Fam Bash Pickems 2026 · $10 entry · <a href="./">← Standings</a></div></div></header>
-<main><form id="f" novalidate autocomplete="on">
-<div class="card"><div class="row two">
- <div><label for="name">Your name</label><input id="name" name="name" type="text" maxlength="24" autocomplete="nickname" placeholder="e.g. Maria R" required>
-  <div class="small">This is how you'll show up on the board.</div></div>
- <div><label for="tag">Your tag</label><input id="tag" name="tag" type="text" maxlength="24" list="tags" placeholder="e.g. FAM BASH" required>
-  <div class="small">Your crew. Shows next to your name.</div></div>
+<header><div class="in"><div><h1>🎃 Week 5 Picks</h1>
+<div class="meta">Fam Bash Pickems 2026 · $10 entry</div></div><a class="back" href="./">← Standings</a></div></header>
+<main><div id="topnote" class="topnote" role="status" aria-live="polite" hidden></div>
+<form id="f" novalidate autocomplete="on">
+<div class="card" id="who"><div class="row two">
+ <div><label for="name">Your name</label><input id="name" name="name" type="text" maxlength="24" autocomplete="nickname" autocapitalize="words" placeholder="e.g. Maria R" aria-describedby="name-help name-err" required>
+  <div class="small" id="name-help">This is how you'll show up on the board.</div><div class="ferr" id="name-err" hidden></div></div>
+ <div><label for="tag">Your tag</label><input id="tag" name="tag" type="text" maxlength="24" list="tags" placeholder="e.g. FAM BASH" aria-describedby="tag-help tag-err" required>
+  <div class="small" id="tag-help">Your crew. Shows next to your name.</div><div class="ferr" id="tag-err" hidden></div></div>
 </div>
 <div class="hp" aria-hidden="true"><label>Website <input id="website" name="website" type="text" tabindex="-1" autocomplete="off"></label></div>
 <details id="editbox"><summary>Already entered? Change your picks</summary>
- <div class="small">Use the edit code you got when you first entered (this phone remembers it).</div>
- <div class="coderow"><input id="code" type="text" maxlength="8" placeholder="CODE" autocomplete="off" autocapitalize="characters">
- <button type="button" class="btn2" id="load">Load my picks</button></div></details>
+ <div class="small" id="code-help">Use the edit code you got when you first entered (this phone remembers it).</div>
+ <div class="coderow"><input id="code" type="text" maxlength="8" placeholder="CODE" autocomplete="off" autocapitalize="characters" aria-label="Edit code" aria-describedby="code-help code-err">
+ <button type="button" class="btn2" id="load">Load my picks</button></div><div class="ferr" id="code-err" hidden></div><div class="okline" id="code-ok" hidden></div></details>
 </div>
 <h2>Your picks</h2><p class="hint">Tap the team you think wins. Each game locks at kickoff. Monday's pick and the tiebreaker lock when the last Sunday game starts.</p>
-<div class="games" id="games"><div class="game" data-m="TB @ DAL"><div class="gtop"><span><span class="when">Thu 10/8 5:15PM PT</span></span><span class="st"></span></div><div class="teams"><button type="button" class="team" data-m="TB @ DAL" data-t="Tampa Bay" aria-pressed="false" aria-label="Tampa Bay"><b>TB</b><small>Tampa Bay</small></button><span class="at">@</span><button type="button" class="team" data-m="TB @ DAL" data-t="Dallas" aria-pressed="false" aria-label="Dallas"><b>DAL</b><small>Dallas</small></button></div></div>
-<div class="game" data-m="PHI @ JAX"><div class="gtop"><span><span class="when">Sun 10/11 6:30AM PT</span></span><span class="st"></span></div><div class="teams"><button type="button" class="team" data-m="PHI @ JAX" data-t="Philadelphia" aria-pressed="false" aria-label="Philadelphia"><b>PHI</b><small>Philadelphia</small></button><span class="at">@</span><button type="button" class="team" data-m="PHI @ JAX" data-t="Jacksonville" aria-pressed="false" aria-label="Jacksonville"><b>JAX</b><small>Jacksonville</small></button></div></div>
-<div class="game" data-m="HOU @ TEN"><div class="gtop"><span><span class="when">Sun 10/11 10:00AM PT</span></span><span class="st"></span></div><div class="teams"><button type="button" class="team" data-m="HOU @ TEN" data-t="Houston" aria-pressed="false" aria-label="Houston"><b>HOU</b><small>Houston</small></button><span class="at">@</span><button type="button" class="team" data-m="HOU @ TEN" data-t="Tennessee" aria-pressed="false" aria-label="Tennessee"><b>TEN</b><small>Tennessee</small></button></div></div>
-<div class="game" data-m="CIN @ MIA"><div class="gtop"><span><span class="when">Sun 10/11 10:00AM PT</span></span><span class="st"></span></div><div class="teams"><button type="button" class="team" data-m="CIN @ MIA" data-t="Cincinnati" aria-pressed="false" aria-label="Cincinnati"><b>CIN</b><small>Cincinnati</small></button><span class="at">@</span><button type="button" class="team" data-m="CIN @ MIA" data-t="Miami" aria-pressed="false" aria-label="Miami"><b>MIA</b><small>Miami</small></button></div></div>
-<div class="game" data-m="LV @ NE"><div class="gtop"><span><span class="when">Sun 10/11 10:00AM PT</span></span><span class="st"></span></div><div class="teams"><button type="button" class="team" data-m="LV @ NE" data-t="Las Vegas" aria-pressed="false" aria-label="Las Vegas"><b>LV</b><small>Las Vegas</small></button><span class="at">@</span><button type="button" class="team" data-m="LV @ NE" data-t="New England" aria-pressed="false" aria-label="New England"><b>NE</b><small>New England</small></button></div></div>
-<div class="game" data-m="MIN @ NO"><div class="gtop"><span><span class="when">Sun 10/11 10:00AM PT</span></span><span class="st"></span></div><div class="teams"><button type="button" class="team" data-m="MIN @ NO" data-t="Minnesota" aria-pressed="false" aria-label="Minnesota"><b>MIN</b><small>Minnesota</small></button><span class="at">@</span><button type="button" class="team" data-m="MIN @ NO" data-t="New Orleans" aria-pressed="false" aria-label="New Orleans"><b>NO</b><small>New Orleans</small></button></div></div>
-<div class="game" data-m="CLE @ NYJ"><div class="gtop"><span><span class="when">Sun 10/11 10:00AM PT</span></span><span class="st"></span></div><div class="teams"><button type="button" class="team" data-m="CLE @ NYJ" data-t="Cleveland" aria-pressed="false" aria-label="Cleveland"><b>CLE</b><small>Cleveland</small></button><span class="at">@</span><button type="button" class="team" data-m="CLE @ NYJ" data-t="NY Jets" aria-pressed="false" aria-label="NY Jets"><b>NYJ</b><small>NY Jets</small></button></div></div>
-<div class="game" data-m="IND @ PIT"><div class="gtop"><span><span class="when">Sun 10/11 10:00AM PT</span></span><span class="st"></span></div><div class="teams"><button type="button" class="team" data-m="IND @ PIT" data-t="Indianapolis" aria-pressed="false" aria-label="Indianapolis"><b>IND</b><small>Indianapolis</small></button><span class="at">@</span><button type="button" class="team" data-m="IND @ PIT" data-t="Pittsburgh" aria-pressed="false" aria-label="Pittsburgh"><b>PIT</b><small>Pittsburgh</small></button></div></div>
-<div class="game" data-m="NYG @ WAS"><div class="gtop"><span><span class="when">Sun 10/11 10:00AM PT</span></span><span class="st"></span></div><div class="teams"><button type="button" class="team" data-m="NYG @ WAS" data-t="NY Giants" aria-pressed="false" aria-label="NY Giants"><b>NYG</b><small>NY Giants</small></button><span class="at">@</span><button type="button" class="team" data-m="NYG @ WAS" data-t="Washington" aria-pressed="false" aria-label="Washington"><b>WAS</b><small>Washington</small></button></div></div>
-<div class="game" data-m="DEN @ LAC"><div class="gtop"><span><span class="when">Sun 10/11 1:05PM PT</span></span><span class="st"></span></div><div class="teams"><button type="button" class="team" data-m="DEN @ LAC" data-t="Denver" aria-pressed="false" aria-label="Denver"><b>DEN</b><small>Denver</small></button><span class="at">@</span><button type="button" class="team" data-m="DEN @ LAC" data-t="LA Chargers" aria-pressed="false" aria-label="LA Chargers"><b>LAC</b><small>LA Chargers</small></button></div></div>
-<div class="game" data-m="CHI @ GB"><div class="gtop"><span><span class="when">Sun 10/11 10:00AM PT</span></span><span class="st"></span></div><div class="teams"><button type="button" class="team" data-m="CHI @ GB" data-t="Chicago" aria-pressed="false" aria-label="Chicago"><b>CHI</b><small>Chicago</small></button><span class="at">@</span><button type="button" class="team" data-m="CHI @ GB" data-t="Green Bay" aria-pressed="false" aria-label="Green Bay"><b>GB</b><small>Green Bay</small></button></div></div>
-<div class="game" data-m="DET @ ARI"><div class="gtop"><span><span class="when">Sun 10/11 1:25PM PT</span></span><span class="st"></span></div><div class="teams"><button type="button" class="team" data-m="DET @ ARI" data-t="Detroit" aria-pressed="false" aria-label="Detroit"><b>DET</b><small>Detroit</small></button><span class="at">@</span><button type="button" class="team" data-m="DET @ ARI" data-t="Arizona" aria-pressed="false" aria-label="Arizona"><b>ARI</b><small>Arizona</small></button></div></div>
-<div class="game" data-m="SF @ SEA"><div class="gtop"><span><span class="when">Sun 10/11 1:25PM PT</span></span><span class="st"></span></div><div class="teams"><button type="button" class="team" data-m="SF @ SEA" data-t="San Francisco" aria-pressed="false" aria-label="San Francisco"><b>SF</b><small>San Francisco</small></button><span class="at">@</span><button type="button" class="team" data-m="SF @ SEA" data-t="Seattle" aria-pressed="false" aria-label="Seattle"><b>SEA</b><small>Seattle</small></button></div></div>
-<div class="game" data-m="BAL @ ATL"><div class="gtop"><span><span class="when">Sun 10/11 5:20PM PT</span></span><span class="st"></span></div><div class="teams"><button type="button" class="team" data-m="BAL @ ATL" data-t="Baltimore" aria-pressed="false" aria-label="Baltimore"><b>BAL</b><small>Baltimore</small></button><span class="at">@</span><button type="button" class="team" data-m="BAL @ ATL" data-t="Atlanta" aria-pressed="false" aria-label="Atlanta"><b>ATL</b><small>Atlanta</small></button></div></div>
-<div class="game" data-m="BUF @ LAR"><div class="gtop"><span><span class="when">Mon 10/12 5:15PM PT</span><span class="badge" title="Tiebreaker game">MNF · TB</span></span><span class="st"></span></div><div class="teams"><button type="button" class="team" data-m="BUF @ LAR" data-t="Buffalo" aria-pressed="false" aria-label="Buffalo"><b>BUF</b><small>Buffalo</small></button><span class="at">@</span><button type="button" class="team" data-m="BUF @ LAR" data-t="LA Rams" aria-pressed="false" aria-label="LA Rams"><b>LAR</b><small>LA Rams</small></button></div></div></div>
+<div class="games" id="games"><div class="game" data-m="TB @ DAL" data-i="1"><div class="gtop"><span><span class="when">Thu 10/8 5:15PM PT</span></span><span class="st"></span></div><div class="teams" role="group" aria-label="TB @ DAL pick" aria-describedby="gerr-1"><button type="button" class="team" data-m="TB @ DAL" data-t="Tampa Bay" aria-pressed="false" aria-label="Tampa Bay"><b>TB</b><small>Tampa Bay</small></button><span class="at">@</span><button type="button" class="team" data-m="TB @ DAL" data-t="Dallas" aria-pressed="false" aria-label="Dallas"><b>DAL</b><small>Dallas</small></button></div><div class="gerr" id="gerr-1" hidden>⚠ Pick a team for this game</div></div>
+<div class="game" data-m="PHI @ JAX" data-i="2"><div class="gtop"><span><span class="when">Sun 10/11 6:30AM PT</span></span><span class="st"></span></div><div class="teams" role="group" aria-label="PHI @ JAX pick" aria-describedby="gerr-2"><button type="button" class="team" data-m="PHI @ JAX" data-t="Philadelphia" aria-pressed="false" aria-label="Philadelphia"><b>PHI</b><small>Philadelphia</small></button><span class="at">@</span><button type="button" class="team" data-m="PHI @ JAX" data-t="Jacksonville" aria-pressed="false" aria-label="Jacksonville"><b>JAX</b><small>Jacksonville</small></button></div><div class="gerr" id="gerr-2" hidden>⚠ Pick a team for this game</div></div>
+<div class="game" data-m="HOU @ TEN" data-i="3"><div class="gtop"><span><span class="when">Sun 10/11 10:00AM PT</span></span><span class="st"></span></div><div class="teams" role="group" aria-label="HOU @ TEN pick" aria-describedby="gerr-3"><button type="button" class="team" data-m="HOU @ TEN" data-t="Houston" aria-pressed="false" aria-label="Houston"><b>HOU</b><small>Houston</small></button><span class="at">@</span><button type="button" class="team" data-m="HOU @ TEN" data-t="Tennessee" aria-pressed="false" aria-label="Tennessee"><b>TEN</b><small>Tennessee</small></button></div><div class="gerr" id="gerr-3" hidden>⚠ Pick a team for this game</div></div>
+<div class="game" data-m="CIN @ MIA" data-i="4"><div class="gtop"><span><span class="when">Sun 10/11 10:00AM PT</span></span><span class="st"></span></div><div class="teams" role="group" aria-label="CIN @ MIA pick" aria-describedby="gerr-4"><button type="button" class="team" data-m="CIN @ MIA" data-t="Cincinnati" aria-pressed="false" aria-label="Cincinnati"><b>CIN</b><small>Cincinnati</small></button><span class="at">@</span><button type="button" class="team" data-m="CIN @ MIA" data-t="Miami" aria-pressed="false" aria-label="Miami"><b>MIA</b><small>Miami</small></button></div><div class="gerr" id="gerr-4" hidden>⚠ Pick a team for this game</div></div>
+<div class="game" data-m="LV @ NE" data-i="5"><div class="gtop"><span><span class="when">Sun 10/11 10:00AM PT</span></span><span class="st"></span></div><div class="teams" role="group" aria-label="LV @ NE pick" aria-describedby="gerr-5"><button type="button" class="team" data-m="LV @ NE" data-t="Las Vegas" aria-pressed="false" aria-label="Las Vegas"><b>LV</b><small>Las Vegas</small></button><span class="at">@</span><button type="button" class="team" data-m="LV @ NE" data-t="New England" aria-pressed="false" aria-label="New England"><b>NE</b><small>New England</small></button></div><div class="gerr" id="gerr-5" hidden>⚠ Pick a team for this game</div></div>
+<div class="game" data-m="MIN @ NO" data-i="6"><div class="gtop"><span><span class="when">Sun 10/11 10:00AM PT</span></span><span class="st"></span></div><div class="teams" role="group" aria-label="MIN @ NO pick" aria-describedby="gerr-6"><button type="button" class="team" data-m="MIN @ NO" data-t="Minnesota" aria-pressed="false" aria-label="Minnesota"><b>MIN</b><small>Minnesota</small></button><span class="at">@</span><button type="button" class="team" data-m="MIN @ NO" data-t="New Orleans" aria-pressed="false" aria-label="New Orleans"><b>NO</b><small>New Orleans</small></button></div><div class="gerr" id="gerr-6" hidden>⚠ Pick a team for this game</div></div>
+<div class="game" data-m="CLE @ NYJ" data-i="7"><div class="gtop"><span><span class="when">Sun 10/11 10:00AM PT</span></span><span class="st"></span></div><div class="teams" role="group" aria-label="CLE @ NYJ pick" aria-describedby="gerr-7"><button type="button" class="team" data-m="CLE @ NYJ" data-t="Cleveland" aria-pressed="false" aria-label="Cleveland"><b>CLE</b><small>Cleveland</small></button><span class="at">@</span><button type="button" class="team" data-m="CLE @ NYJ" data-t="NY Jets" aria-pressed="false" aria-label="NY Jets"><b>NYJ</b><small>NY Jets</small></button></div><div class="gerr" id="gerr-7" hidden>⚠ Pick a team for this game</div></div>
+<div class="game" data-m="IND @ PIT" data-i="8"><div class="gtop"><span><span class="when">Sun 10/11 10:00AM PT</span></span><span class="st"></span></div><div class="teams" role="group" aria-label="IND @ PIT pick" aria-describedby="gerr-8"><button type="button" class="team" data-m="IND @ PIT" data-t="Indianapolis" aria-pressed="false" aria-label="Indianapolis"><b>IND</b><small>Indianapolis</small></button><span class="at">@</span><button type="button" class="team" data-m="IND @ PIT" data-t="Pittsburgh" aria-pressed="false" aria-label="Pittsburgh"><b>PIT</b><small>Pittsburgh</small></button></div><div class="gerr" id="gerr-8" hidden>⚠ Pick a team for this game</div></div>
+<div class="game" data-m="NYG @ WAS" data-i="9"><div class="gtop"><span><span class="when">Sun 10/11 10:00AM PT</span></span><span class="st"></span></div><div class="teams" role="group" aria-label="NYG @ WAS pick" aria-describedby="gerr-9"><button type="button" class="team" data-m="NYG @ WAS" data-t="NY Giants" aria-pressed="false" aria-label="NY Giants"><b>NYG</b><small>NY Giants</small></button><span class="at">@</span><button type="button" class="team" data-m="NYG @ WAS" data-t="Washington" aria-pressed="false" aria-label="Washington"><b>WAS</b><small>Washington</small></button></div><div class="gerr" id="gerr-9" hidden>⚠ Pick a team for this game</div></div>
+<div class="game" data-m="DEN @ LAC" data-i="10"><div class="gtop"><span><span class="when">Sun 10/11 1:05PM PT</span></span><span class="st"></span></div><div class="teams" role="group" aria-label="DEN @ LAC pick" aria-describedby="gerr-10"><button type="button" class="team" data-m="DEN @ LAC" data-t="Denver" aria-pressed="false" aria-label="Denver"><b>DEN</b><small>Denver</small></button><span class="at">@</span><button type="button" class="team" data-m="DEN @ LAC" data-t="LA Chargers" aria-pressed="false" aria-label="LA Chargers"><b>LAC</b><small>LA Chargers</small></button></div><div class="gerr" id="gerr-10" hidden>⚠ Pick a team for this game</div></div>
+<div class="game" data-m="CHI @ GB" data-i="11"><div class="gtop"><span><span class="when">Sun 10/11 10:00AM PT</span></span><span class="st"></span></div><div class="teams" role="group" aria-label="CHI @ GB pick" aria-describedby="gerr-11"><button type="button" class="team" data-m="CHI @ GB" data-t="Chicago" aria-pressed="false" aria-label="Chicago"><b>CHI</b><small>Chicago</small></button><span class="at">@</span><button type="button" class="team" data-m="CHI @ GB" data-t="Green Bay" aria-pressed="false" aria-label="Green Bay"><b>GB</b><small>Green Bay</small></button></div><div class="gerr" id="gerr-11" hidden>⚠ Pick a team for this game</div></div>
+<div class="game" data-m="DET @ ARI" data-i="12"><div class="gtop"><span><span class="when">Sun 10/11 1:25PM PT</span></span><span class="st"></span></div><div class="teams" role="group" aria-label="DET @ ARI pick" aria-describedby="gerr-12"><button type="button" class="team" data-m="DET @ ARI" data-t="Detroit" aria-pressed="false" aria-label="Detroit"><b>DET</b><small>Detroit</small></button><span class="at">@</span><button type="button" class="team" data-m="DET @ ARI" data-t="Arizona" aria-pressed="false" aria-label="Arizona"><b>ARI</b><small>Arizona</small></button></div><div class="gerr" id="gerr-12" hidden>⚠ Pick a team for this game</div></div>
+<div class="game" data-m="SF @ SEA" data-i="13"><div class="gtop"><span><span class="when">Sun 10/11 1:25PM PT</span></span><span class="st"></span></div><div class="teams" role="group" aria-label="SF @ SEA pick" aria-describedby="gerr-13"><button type="button" class="team" data-m="SF @ SEA" data-t="San Francisco" aria-pressed="false" aria-label="San Francisco"><b>SF</b><small>San Francisco</small></button><span class="at">@</span><button type="button" class="team" data-m="SF @ SEA" data-t="Seattle" aria-pressed="false" aria-label="Seattle"><b>SEA</b><small>Seattle</small></button></div><div class="gerr" id="gerr-13" hidden>⚠ Pick a team for this game</div></div>
+<div class="game" data-m="BAL @ ATL" data-i="14"><div class="gtop"><span><span class="when">Sun 10/11 5:20PM PT</span></span><span class="st"></span></div><div class="teams" role="group" aria-label="BAL @ ATL pick" aria-describedby="gerr-14"><button type="button" class="team" data-m="BAL @ ATL" data-t="Baltimore" aria-pressed="false" aria-label="Baltimore"><b>BAL</b><small>Baltimore</small></button><span class="at">@</span><button type="button" class="team" data-m="BAL @ ATL" data-t="Atlanta" aria-pressed="false" aria-label="Atlanta"><b>ATL</b><small>Atlanta</small></button></div><div class="gerr" id="gerr-14" hidden>⚠ Pick a team for this game</div></div>
+<div class="game" data-m="BUF @ LAR" data-i="15"><div class="gtop"><span><span class="when">Mon 10/12 5:15PM PT</span><span class="badge" title="Tiebreaker game">MNF · TB</span></span><span class="st"></span></div><div class="teams" role="group" aria-label="BUF @ LAR pick" aria-describedby="gerr-15"><button type="button" class="team" data-m="BUF @ LAR" data-t="Buffalo" aria-pressed="false" aria-label="Buffalo"><b>BUF</b><small>Buffalo</small></button><span class="at">@</span><button type="button" class="team" data-m="BUF @ LAR" data-t="LA Rams" aria-pressed="false" aria-label="LA Rams"><b>LAR</b><small>LA Rams</small></button></div><div class="gerr" id="gerr-15" hidden>⚠ Pick a team for this game</div></div></div>
+<details class="lockedwrap" id="lockedwrap" hidden><summary id="lockedsum">Games already started</summary><div class="games" id="lockedgames"></div></details>
 <h2>Tiebreaker</h2>
 <div class="card tb"><label for="tb">Total points scored in BUF @ LAR (Mon 10/12 5:15PM PT)</label>
- <div class="tbrow"><input id="tb" type="number" inputmode="numeric" min="0" max="200" step="1" placeholder="e.g. 47">
- <span class="small" id="tbst"></span></div></div>
+ <div class="tbrow"><input id="tb" type="number" inputmode="numeric" min="0" max="200" step="1" placeholder="e.g. 47" aria-describedby="tbst tb-err">
+ <span class="small" id="tbst"></span></div><div class="ferr" id="tb-err" hidden></div></div>
 <div id="msg" class="msg" role="status" aria-live="polite"></div>
 <div class="bar"><div class="prog"><b id="cnt">0</b> of <span id="tot">15</span> picked<div class="pbar"><i id="pb"></i></div></div>
 <button class="submit" id="go" type="submit">Submit picks</button></div>
@@ -116,33 +146,82 @@ let state={}; try{state=JSON.parse(localStorage.getItem(LS)||'{}')}catch(_e){}
 state.picks=state.picks||{};
 const save=()=>{try{localStorage.setItem(LS,JSON.stringify(state))}catch(_e){}};
 const form=$('#f');
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const cardOf=m=>$$('.game').find(el=>el.dataset.m===m);
+// ---- inline errors: message under the field / card, aria-invalid + aria-describedby, first one focused ----
+function setErr(id,text){
+  const el=$('#'+id), box=$('#'+id+'-err'); if(!el||!box) return;
+  if(text){box.textContent='⚠ '+text; box.hidden=false; el.setAttribute('aria-invalid','true');}
+  else{box.hidden=true; box.textContent=''; el.removeAttribute('aria-invalid');}
+}
+function setGameErr(el,on){
+  if(!el) return; const t=el.querySelector('.teams'), e=el.querySelector('.gerr');
+  el.classList.toggle('missing',!!on); e.hidden=!on;
+  if(on) t.setAttribute('aria-invalid','true'); else t.removeAttribute('aria-invalid');
+}
+function summary(html,kind){
+  const m=$('#msg');
+  if(!html){ if(!m.classList.contains('ok')){m.className='msg'; m.innerHTML='';} return; }
+  m.className='msg '+(kind||'err'); m.setAttribute('role',kind==='ok'?'status':'alert'); m.innerHTML=html;
+}
+function clearErrs(){ ['name','tag','tb','code'].forEach(k=>setErr(k,'')); $$('.game').forEach(g=>setGameErr(g,false)); summary(''); }
+function maybeClearSummary(){ if(!$('[aria-invalid="true"]')) summary(''); }
+function focusFirst(){
+  const t=$('[aria-invalid="true"]'); if(!t) return false;
+  const det=t.closest('details'); if(det) det.open=true;
+  const f=t.classList.contains('teams')?(t.querySelector('.team:not(:disabled)')||t):t;
+  f.focus({preventScroll:true}); (t.closest('.game')||t).scrollIntoView({behavior:'smooth',block:'center'});
+  return true;
+}
+function msg(kind,html){summary(html,kind); $('#msg').scrollIntoView({behavior:'smooth',block:'center'});}
+function topnote(kind,html){const n=$('#topnote'); if(!n) return; if(!html){n.hidden=true; n.innerHTML=''; return;} if(n.dataset.k!==kind+html){n.className='topnote '+kind; n.innerHTML=html; n.dataset.k=kind+html;} n.hidden=false;}
+let groupSig='';
 function paint(){
-  let n=0, open=0;
+  let n=0, open=0, locked=0, next=null;
   $$('.game').forEach(el=>{
     const g=byM[el.dataset.m], lk=!form||isLocked(g), pick=state.picks[g.matchup];
     el.classList.toggle('locked',!!form&&lk);
-    el.querySelectorAll('.team').forEach(b=>{const on=pick===b.dataset.t; b.classList.toggle('on',on); b.setAttribute('aria-pressed',on); b.disabled=lk;});
+    el.querySelectorAll('.team').forEach(b=>{const on=pick===b.dataset.t; b.classList.toggle('on',on); b.setAttribute('aria-pressed',on); b.disabled=lk||(!!form&&!serverOpen);});
     const st=el.querySelector('.st'), t=Date.parse(g.lock_at)-now();
     if(!form) st.textContent='';
     else if(lk) st.textContent='🔒 Locked'+(pick?' · your pick stays':'');
     else st.textContent=(g.is_monday&&g.lock_at!==g.kickoff?'Locks Sun ':'Locks in ')+(g.is_monday&&g.lock_at!==g.kickoff?pt.format(new Date(g.lock_at)).replace(/^\w+ /,''):until(t));
     el.classList.toggle('done',!!pick&&!lk);
-    if(pick) n++; if(!lk) open++;
+    if(pick) n++;
+    if(!lk){ open++; const tl=Date.parse(g.lock_at); if(next===null||tl<next) next=tl; } else if(form) locked++;
   });
   if(!form) return;
+  // already-started games collapse into one row at the bottom so latecomers land on the open ones
+  const G=$('#games'), LG=$('#lockedgames'), LW=$('#lockedwrap'), all=$$('.game').sort((a,b)=>a.dataset.i-b.dataset.i);
+  const sig=all.map(el=>el.classList.contains('locked')?1:0).join('');
+  if(sig!==groupSig){ groupSig=sig; all.forEach(el=>(el.classList.contains('locked')?LG:G).appendChild(el)); }
+  LW.hidden=!locked; G.hidden=!open;
+  $('#lockedsum').textContent=locked+' game'+(locked===1?'':'s')+' already started · picks locked';
   $('#cnt').textContent=n; $('#pb').style.width=(100*n/D.games.length)+'%';
-  const tb=$('#tb'), l=tbLocked(); tb.disabled=l; $('#tbst').textContent=l?'🔒 Locked':'Locks '+pt.format(new Date(tbLock))+' PT';
-  if(!serverOpen||(!open&&!state.code)){$('#go').disabled=true; $('#go').textContent=serverOpen?'All games locked':'Closed';}
+  const tb=$('#tb'), l=tbLocked(); tb.disabled=l||!serverOpen; $('#tbst').textContent=l?'🔒 Locked':'Locks '+pt.format(new Date(tbLock))+' PT';
+  const closed=!serverOpen||(!open&&!state.code);
+  if(closed){$('#go').disabled=true; $('#go').textContent=serverOpen?'All games locked':'Closed';}
+  ['name','tag','code','load'].forEach(k=>{const el=$('#'+k); if(el) el.disabled=closed;});
+  $('#who').classList.toggle('off',closed);
+  if(closed) topnote('closed','<b>🔒 Week '+W+' picks are closed.</b>'+(serverOpen?' Every game has kicked off, so new picks can\'t be added.':' Week '+W+' isn\'t taking online picks right now.')+' <a class="tbtn" href="./">See the board →</a>');
+  else if(locked) topnote('partial','<b>⏱ '+open+' of '+D.games.length+' games still open.</b> '+locked+' already started (collapsed at the bottom).'+(next?' Next lock '+esc(pt.format(new Date(next)))+' PT.':''));
+  else topnote('','');
 }
-function msg(kind,html){const m=$('#msg'); m.className='msg '+kind; m.innerHTML=html; m.scrollIntoView({behavior:'smooth',block:'center'});}
-const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 document.addEventListener('click',ev=>{
+  const c=ev.target.closest('#copy'); if(c){ copyCode(c); return; }
   const b=ev.target.closest('.team'); if(!b||b.disabled||!form) return;
   const m=b.dataset.m; state.picks[m]=state.picks[m]===b.dataset.t?undefined:b.dataset.t; save(); paint();
+  if(state.picks[m]){ setGameErr(b.closest('.game'),false); maybeClearSummary(); }
 });
+function copyCode(btn){
+  const code=($('#okcode')||{}).textContent||''; if(!code) return;
+  const done=ok=>{btn.textContent=ok?'Copied ✓':'Copy failed: long-press the code'; setTimeout(()=>{btn.textContent='Copy code';},2500);};
+  const fallback=()=>{try{const t=document.createElement('textarea'); t.value=code; t.setAttribute('readonly',''); t.style.position='fixed'; t.style.opacity='0'; document.body.appendChild(t); t.select(); const ok=document.execCommand('copy'); t.remove(); done(ok);}catch(_e){done(false);}};
+  if(navigator.clipboard&&window.isSecureContext) navigator.clipboard.writeText(code).then(()=>done(true),fallback); else fallback();
+}
 if(form){
-  ['name','tag','code'].forEach(k=>{const el=$('#'+k); if(state[k]) el.value=state[k]; el.addEventListener('input',()=>{state[k]=el.value; save();});});
-  if(state.tb!=null) $('#tb').value=state.tb; $('#tb').addEventListener('input',()=>{state.tb=$('#tb').value; save();});
+  ['name','tag','code'].forEach(k=>{const el=$('#'+k); if(state[k]) el.value=state[k]; el.addEventListener('input',()=>{state[k]=el.value; save(); if(el.value.trim()){setErr(k,''); maybeClearSummary();}});});
+  if(state.tb!=null) $('#tb').value=state.tb; $('#tb').addEventListener('input',()=>{state.tb=$('#tb').value; save(); if($('#tb').value.trim()){setErr('tb',''); maybeClearSummary();}});
   if(state.code){ $('#editbox').open=true; $('#go').textContent='Update picks'; }
   async function api(path,body){
     const r=await fetch(D.apiBase+'/api/'+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
@@ -150,35 +229,48 @@ if(form){
   }
   $('#load').addEventListener('click',async()=>{
     const name=$('#name').value.trim(), code=$('#code').value.trim();
-    if(!name||!code) return msg('err','Enter your name and edit code first.');
+    setErr('name',''); setErr('code','');
+    if(!name||!code){ if(!name) setErr('name','Enter the name you entered with.'); if(!code) setErr('code','Enter your edit code.'); focusFirst(); return; }
     try{const r=await api('lookup',{week:W,name,code});
-      if(!r.ok) return msg('err',esc(r.error||'Not found'));
+      if(!r.ok){ setErr('code',r.error||'Not found'); focusFirst(); return; }
       state.picks=r.picks||{}; state.code=r.edit_code; state.tag=r.tag; $('#tag').value=r.tag; if(r.tiebreaker!=null){state.tb=r.tiebreaker; $('#tb').value=r.tiebreaker;}
-      save(); paint(); msg('ok','Loaded your picks. Change what you want and tap Submit.');
-    }catch(_e){msg('err','Could not reach the picks server. Check your connection and try again.');}
+      save(); clearErrs(); paint(); $('#go').textContent='Update picks';
+      $('#code-ok').hidden=false; $('#code-ok').textContent='✓ Loaded your picks. Change what you want and tap Update picks.';
+    }catch(_e){ setErr('code','Could not reach the picks server. Check your connection and try again.'); focusFirst(); }
   });
   form.addEventListener('submit',async ev=>{
-    ev.preventDefault(); paint();
+    ev.preventDefault(); paint(); clearErrs();
     const name=$('#name').value.trim(), tag=$('#tag').value.trim().replace(/[()]/g,''), code=$('#code').value.trim();
-    if(!name) {$('#name').focus(); return msg('err','Please enter your name.');}
-    if(!tag) {$('#tag').focus(); return msg('err','Please enter your tag (your crew, like FAM BASH).');}
     const picks={}, missing=[];
     D.games.forEach(g=>{ if(isLocked(g)) return; const p=state.picks[g.matchup]; if(p) picks[g.matchup]=p; else missing.push(g.matchup); });
-    if(missing.length&&!code) return msg('err','Pick every game that hasn\'t started yet. Missing: <b>'+esc(missing.join(', '))+'</b>');
-    const tbv=$('#tb').value.trim();
-    if(!tbLocked()&&!code&&tbv==='') {$('#tb').focus(); return msg('err','Please enter your tiebreaker.');}
+    const tbv=$('#tb').value.trim(), need=[];
+    if(!name){ setErr('name','Please enter your name.'); need.push('your name'); }
+    if(!tag){ setErr('tag','Please enter your tag (your crew, like FAM BASH).'); need.push('your tag'); }
+    if(missing.length&&!code){ missing.forEach(m=>setGameErr(cardOf(m),true)); need.push(missing.length+(missing.length===1?' game':' games')); }
+    if(!tbLocked()&&!code&&tbv===''){ setErr('tb','Please enter your tiebreaker.'); need.push('the tiebreaker'); }
+    if(need.length){ summary('Almost there. Still needed: <b>'+esc(need.join(', '))+'</b>. Each one is marked in red.'); focusFirst(); return; }
     const go=$('#go'); go.disabled=true; go.textContent='Sending…';
     try{
       const r=await api('submit',{week:W,name,tag,picks,tiebreaker:tbLocked()?'':tbv,code,website:$('#website').value});
       if(r.ok){
         state.code=r.edit_code; state.name=r.name; state.tag=r.tag; state.picks=r.picks||state.picks; save();
         $('#code').value=r.edit_code||'';
-        msg('ok','<b style="font-size:18px">✅ '+esc(r.message)+'</b><br>'+esc(r.picked)+' of '+esc(r.games)+' games picked'+(r.picked<r.games?' (the rest had already kicked off)':'')+(r.tiebreaker!=null?' · tiebreaker '+esc(r.tiebreaker):'')+
-          (r.edit_code?'<br>Your edit code:<br><span class="code">'+esc(r.edit_code)+'</span><br><span class="small" style="color:#d1fae5">Screenshot it. You need it to change picks on another phone; this phone remembers it.</span>':'')+
-          (r.paid?'':'<br><span class="small" style="color:#d1fae5">Pay Andy $'+D.fee+' to make it count. You show as unpaid until he marks you paid.</span>'));
+        summary('<h3 id="okh" tabindex="-1">✅ '+esc(r.message)+'</h3>'+esc(r.picked)+' of '+esc(r.games)+' games picked'+(r.picked<r.games?' (the rest had already kicked off)':'')+(r.tiebreaker!=null?' · tiebreaker '+esc(r.tiebreaker):'')+
+          (r.edit_code?'<div class="oklbl">Your edit code:</div><div class="okcode"><span class="code" id="okcode">'+esc(r.edit_code)+'</span><button type="button" class="btn2 copy" id="copy">Copy code</button></div><span class="small" style="color:#d1fae5">Screenshot it or copy it. You need it to change picks on another phone; this phone remembers it.</span>':'')+
+          (r.paid?'':'<br><span class="small" style="color:#d1fae5">Pay Andy $'+D.fee+' to make it count. You show as unpaid until he marks you paid.</span>')+
+          '<a class="board" href="./">See the board →</a>','ok');
+        $('#msg').scrollIntoView({behavior:'smooth',block:'center'}); const h=$('#okh'); if(h) h.focus({preventScroll:true});
       } else {
-        if(r.code==='NEED_CODE'){ $('#editbox').open=true; $('#code').focus(); }
-        msg('err',esc(r.error||'Something went wrong. Try again.'));
+        const c=r.code, t=r.error||'Something went wrong. Try again.';
+        if(c==='NAME'||c==='TAKEN') setErr('name',t);
+        else if(c==='TAG') setErr('tag',t);
+        else if(c==='TB') setErr('tb',t);
+        else if(c==='NEED_CODE'){ $('#editbox').open=true; setErr('code',t); }
+        else if(c==='MISSING') (t.split('Missing: ')[1]||'').split(', ').forEach(m=>setGameErr(cardOf(m.trim()),true));
+        else if(c==='CLOSED'||c==='WEEK'){ serverOpen=false; }
+        summary(esc(t));
+        if(c==='CLOSED'||c==='WEEK'){ paint(); window.scrollTo({top:0,behavior:'smooth'}); }
+        else if(!focusFirst()) $('#msg').scrollIntoView({behavior:'smooth',block:'center'});
       }
     }catch(_e){ msg('err','Could not reach the picks server. Check your connection and tap Submit again.'); }
     finally{ go.disabled=false; go.textContent=state.code?'Update picks':'Submit picks'; paint(); }
@@ -190,7 +282,7 @@ if(form){
     (s.games||[]).forEach(g=>{ if(byM[g.matchup]){ byM[g.matchup].lock_at=g.lock_at; byM[g.matchup].locked_srv=!!g.locked; } });
     if(s.tiebreaker_lock_at) tbLock=s.tiebreaker_lock_at;
     if(s.tiebreaker_locked) tbLock=new Date(0).toISOString();
-    serverOpen=!!s.open; if(!s.open) msg('err','Week '+W+' isn\'t taking online picks right now.');
+    serverOpen=!!s.open;
     paint();
   }).catch(()=>{});
 }

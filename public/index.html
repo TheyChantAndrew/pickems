@@ -46,7 +46,8 @@ td.who,th.who{text-align:left}
 .tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
 .tile{background:#1d1226;border:1px solid #3d2a4a;border-radius:12px;padding:8px 10px;min-width:0}
 .tile .k{font-size:11.5px;color:#d6c4a8;text-transform:uppercase;letter-spacing:.05em} .tile .v{font-size:19px;font-weight:800;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tile .lv{font-size:16px;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.2} .tile .s{font-size:12px;color:#fdba74}
+.tile .lv{font-size:16px;white-space:normal;line-height:1.25;overflow-wrap:anywhere}
+.tiles.tied{grid-template-columns:repeat(2,minmax(0,1fr))} .tiles.tied .tile-lead{grid-column:1/-1} .tile .s{font-size:12px;color:#fdba74}
 .money{font-size:13px;color:#e7d3b0;margin-top:10px} .money b{color:#fff8ee}
 /* jump bar */
 .jump{position:sticky;top:0;z-index:5;display:flex;gap:8px;margin:12px -16px 0;padding:8px 16px;background:#140c18ee;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);border-bottom:1px solid #3d2a4a}
@@ -123,7 +124,7 @@ tr.lead td.pick-win{background:#15803d} tr.lead td.pick-loss{background:#3a1420}
 <script src="/live.js" defer></script>
 </head><body>
 <header><div class="wrap"><h1>🎃 Fam Bash Pickems</h1>
-<div class="meta">Week 5 · 2026<span class="br"></span><span data-hook="updated">Updated Wed 4:24 PM PT</span></div></div></header>
+<div class="meta">Week 5 · 2026<span class="br"></span><span data-hook="updated">Updated Wed 4:38 PM PT</span></div></div></header>
 <main class="wrap">
 <section id="status-card" class="status" data-state="open" data-week="5" data-locked="true" aria-label="Week 5 status">
 <div class="eyebrow"><span class="pill" aria-hidden="true"></span><span>Week 5 · <span data-hook="games-final">0</span> of 15 final</span></div>
@@ -131,10 +132,10 @@ tr.lead td.pick-win{background:#15803d} tr.lead td.pick-loss{background:#3a1420}
 <div class="live-games" id="live-games"></div>
 <div class="lockline"><span class="lbl" id="lock-lbl">Picks lock</span> <b data-hook="lock">Thu 5:15p PT · TB @ DAL</b></div></div>
 <a class="cta" href="/submit">📝 <b>Make your Week 5 picks</b><span>Pick every game + tiebreaker right here. No sign-up. Each pick locks at kickoff.</span></a>
-<div class="tiles">
+<div class="tiles" id="tiles">
 <div class="tile"><div class="k">Payout</div><div class="v" data-hook="payout">$10</div><div class="s"><span data-hook="pot" hidden>$10</span>to the winner</div></div>
 <div class="tile"><div class="k">Entries</div><div class="v" data-hook="entries">1 entry</div><div class="s" id="unpaid-n">all paid ✅</div></div>
-<div class="tile"><div class="k" id="leader-k">Leader</div><div class="v lv" data-hook="leader" title="—">—</div><div class="s" id="leader-s">after 1st final</div></div>
+<div class="tile tile-lead" id="leader-tile" title="—"><div class="k" id="leader-k">Leader</div><div class="v lv" data-hook="leader-short">—</div><div class="s" id="leader-s">after 1st final</div></div>
 </div>
 
 </section>
@@ -165,8 +166,10 @@ document.addEventListener('pickems:board',function(ev){var b=ev.detail||{},st=b.
  q('[data-hook="games-final"]').forEach(function(e){e.textContent=st.games_final;});
  q('[data-hook="of"]').forEach(function(e){e.hidden=!st.games_final;});
  var ll=document.getElementById('lock-lbl');if(ll)ll.textContent=st.next_lock_iso?(st.state==='open'?'Picks lock':'Next lock'):'';
- var k=document.getElementById('leader-k');if(k)k.textContent=L.length>1?'Tied for 1st':'Leader';
- var ls=document.getElementById('leader-s');if(ls)ls.textContent=L.length>1?L.length+' tied':(L.length?'':'after 1st final');
+ var k=document.getElementById('leader-k');if(k)k.textContent=L.length>1?'Leaders':'Leader';
+ var ls=document.getElementById('leader-s');if(ls)ls.textContent=L.length?L[0].score+' correct'+(L.length>1?' each':''):'after 1st final';
+ var tl=document.getElementById('tiles');if(tl)tl.classList.toggle('tied',L.length>1);
+ var lt=document.getElementById('leader-tile');if(lt&&st.text)lt.title=st.text.leader||'';
  var up=ps.filter(function(p){return !p.paid;}).length,un=document.getElementById('unpaid-n');if(un)un.textContent=up?up+' unpaid':'all paid ✅';
  var cnt={};ps.forEach(function(p){cnt[p.rank]=(cnt[p.rank]||0)+1;});
  q('tbody').forEach(function(tb){var rows={};q('tr[data-player]',tb).forEach(function(r){rows[r.getAttribute('data-player')]=r;});

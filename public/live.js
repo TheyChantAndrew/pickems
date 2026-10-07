@@ -2,12 +2,14 @@
    While the tab is visible: re-fetch /board/current.json every 60 s (cache-busted) and right away when the tab becomes
    visible again, then patch the page in place through data hooks. Missing hooks are no-ops. A new week, or a player
    added/removed, triggers ONE full reload instead (never a loop). Optional config before this script:
-   window.PICKEMS_LIVE = {url: "/board/current.json", interval: 60000}. Fires document "pickems:board" (detail = board). */
+   window.PICKEMS_LIVE = {url: "/board/current.json", interval: 60000}. Fires document "pickems:board" (detail = board).
+   Hook names map to status.text keys; "leader-short" reads text.leader_short. */
 (function () {
   "use strict";
   var cfg = window.PICKEMS_LIVE || {};
   var URL_ = cfg.url || "/board/current.json", EVERY = cfg.interval || 60000, RELOAD_KEY = "pickems-live-reloaded";
   var timer = null, busy = false, first = null;
+  var TEXT_KEY = {"leader-short": "leader_short"};                    // data-hook name -> status.text key (else same name)
 
   function all(sel) { return Array.prototype.slice.call(document.querySelectorAll(sel)); }
   function setText(el, t) { if (t !== undefined && t !== null && el.textContent !== String(t)) el.textContent = String(t); }
@@ -41,8 +43,8 @@
       var h = el.getAttribute("data-hook");
       if (h === "score" && el.hasAttribute("data-player")) {
         var p = byKey[el.getAttribute("data-player")]; if (p) setText(el, p.score);
-      } else if (Object.prototype.hasOwnProperty.call(text, h)) {
-        setText(el, text[h]);
+      } else if (Object.prototype.hasOwnProperty.call(text, TEXT_KEY[h] || h)) {
+        setText(el, text[TEXT_KEY[h] || h]);
       }
     });
     all("tr[data-player]").forEach(function (tr) {

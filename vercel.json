@@ -4,10 +4,19 @@
   "buildCommand": "",
   "outputDirectory": "public",
   "cleanUrls": true,
+  "regions": [
+    "pdx1"
+  ],
   "functions": {
-    "api/**/*.js": {"includeFiles": "data/**", "maxDuration": 10}
+    "api/**/*.js": {
+      "includeFiles": "data/**",
+      "maxDuration": 10
+    }
   },
   "rewrites": [
-    {"source": "/api/admin/export.csv", "destination": "/api/admin/export"}
+    {
+      "source": "/api/admin/export.csv",
+      "destination": "/api/admin/export"
+    }
   ]
 }

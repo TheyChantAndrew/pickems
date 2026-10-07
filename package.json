@@ -1,7 +1,11 @@
 {
   "name": "fambash-pickems",
   "private": true,
-  "description": "Fam Bash Pickems: static site in public/, pick submission functions in api/ (Upstash Redis).",
-  "engines": {"node": "22.x"},
-  "dependencies": {"@upstash/redis": "^1.39.0"}
+  "description": "Fam Bash Pickems: static site in public/, pick submission functions in api/ (Turso / libSQL).",
+  "engines": {
+    "node": "22.x"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.18.0"
+  }
 }

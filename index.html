@@ -1,38 +1,88 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="refresh" content="120">
+<meta name="theme-color" content="#1a0b08">
 <title>Fam Bash Pickems</title>
 <style>
-body{font-family:-apple-system,system-ui,Segoe UI,Roboto,sans-serif;margin:0;background:#140c18;color:#f6efe4;background-image:radial-gradient(circle at 8% 0,#3b2150 0,transparent 26%),radial-gradient(circle at 100% 0,#5c2a0e 0,transparent 24%)}
-header{background:linear-gradient(100deg,#1a0b08 0%,#c2410c 48%,#7c2d12 100%);color:#fff8ee;padding:16px 16px 14px;border-bottom:4px solid #f59e0b} h1{margin:0;font-size:22px;letter-spacing:.2px}
-.meta{font-size:13px;opacity:.92;margin-top:4px} main{padding:12px;max-width:1300px;margin:auto}
-h2{font-size:17px;margin:18px 0 8px;color:#fdba74} .card{background:#24162e;border-radius:10px;box-shadow:0 1px 3px #0008;overflow:auto;border:1px solid #3d2a4a}
-table{border-collapse:collapse;width:100%;font-size:13px} th,td{padding:7px 6px;text-align:center;border-bottom:1px solid #3d2a4a;white-space:nowrap}
-th{background:#c2410c;color:#fff8ee;font-weight:600;position:sticky;top:0} th .sub{font-weight:400;font-size:10px;opacity:.9}
-td.who,th.who{text-align:left;position:sticky;left:0;background:#24162e;z-index:1} th.who{background:#c2410c;z-index:2}
-.nm{font-weight:600;display:block} .tag{font-size:10px;color:#d6b48a}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{font-family:-apple-system,system-ui,Segoe UI,Roboto,sans-serif;margin:0;background:#140c18;color:#f6efe4;background-image:radial-gradient(circle at 8% 0,#3b2150 0,transparent 26%),radial-gradient(circle at 100% 0,#5c2a0e 0,transparent 24%);line-height:1.35;overflow-x:hidden}
+header{background:linear-gradient(100deg,#1a0b08 0%,#c2410c 48%,#7c2d12 100%);color:#fff8ee;border-bottom:4px solid #f59e0b}
+.wrap{max-width:1300px;margin:auto;padding:16px} header .wrap{padding:18px 16px 14px}
+h1{margin:0;font-size:24px;letter-spacing:.2px} .meta{font-size:13px;opacity:.92;margin-top:4px}
+main.wrap{padding-top:14px}
+h2{font-size:18px;margin:20px 0 8px;color:#fdba74}
+.card{background:#24162e;border-radius:12px;box-shadow:0 1px 3px #0008;border:1px solid #3d2a4a;overflow:hidden}
+table{border-collapse:separate;border-spacing:0;width:100%;font-size:14px}
+th,td{padding:9px 8px;text-align:center;border-bottom:1px solid #3d2a4a;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+th{background:#c2410c;color:#fff8ee;font-weight:600} th .sub{font-weight:400;font-size:10.5px;opacity:.92;margin-top:2px}
+td.who,th.who{text-align:left}
+.nm{font-weight:600;display:block} .tag{font-size:10.5px;color:#d6b48a;display:block}
 .win{background:#166534;color:#f0fdf4} .loss{background:#9f1239;color:#fff1f2} .split{background:#713f12;color:#fef3c7} .pd{background:#14532d;color:#dcfce7} .up{background:#9a3412;color:#ffedd5;font-weight:700}
-.num{font-variant-numeric:tabular-nums} .b{font-weight:700} .dim{color:#d6c4a8;font-size:11px} .rk{width:28px;color:#fdba74}
-tr.lead td{background:#3b2416} tr.lead td.who{background:#3b2416} tr.lead td.pd{background:#14532d} tr.lead td.up{background:#9a3412}
-.legend{font-size:12px;color:#e7d3b0;margin:8px 2px} .legend span{display:inline-block;padding:1px 6px;border-radius:4px;margin-right:4px}
+.num{font-variant-numeric:tabular-nums} .b{font-weight:700} .dim{color:#d6c4a8;font-size:11px} .rk{width:34px;color:#fdba74;font-weight:700}
+tr.lead td{background:#3b2416} tr.lead td.pd{background:#14532d} tr.lead td.up{background:#9a3412}
+tr.lead td.win{background:#166534} tr.lead td.loss{background:#9f1239} tr.lead td.split{background:#713f12}
+.lk{font-size:13px} .hidtxt{font-size:11px;color:#d6c4a8;margin-left:4px} td.hid{background:#1d1226;color:#bba5c9}
+.legend{font-size:12.5px;color:#e7d3b0;margin:10px 2px;line-height:2} .legend span.hid{background:#1d1226;color:#bba5c9;border:1px solid #3d2a4a} .legend span{display:inline-block;padding:1px 7px;border-radius:5px;margin-right:4px;line-height:1.5}
+.note{font-size:13px;color:#e7d3b0;margin:8px 2px}
+.lockbox{background:#2b1b36;border:1px dashed #a78bfa;color:#e9ddff;border-radius:10px;padding:9px 12px;font-size:13px;margin:10px 0}
 .banner{background:#f59e0b;color:#1a0b08;padding:10px 14px;border-radius:10px;font-weight:700;margin-bottom:10px}
-.promo{display:block;background:linear-gradient(90deg,#f59e0b,#ea580c);color:#1a0b08;text-decoration:none;padding:12px 14px;border-radius:10px;font-size:15px;margin:4px 0 10px;box-shadow:0 1px 3px #0006;text-align:center}
-.money{background:#24162e;border:1px solid #3d2a4a;border-radius:10px;box-shadow:0 1px 3px #0006;padding:10px 14px;font-size:14px;margin-top:4px}
-#standings table{max-width:520px}
-.hall{max-width:640px;border:2px solid #f59e0b;background:linear-gradient(180deg,#2a1a12,#24162e)} .hall table{font-size:14px}
-.hall th{background:#9a3412;position:static} .hall th.who{background:#9a3412} .hall td.who{background:transparent;position:static}
-.hall td{white-space:normal;vertical-align:middle} .hall .tag{margin-left:6px} .hall .wk{font-weight:700;color:#fdba74;white-space:nowrap}
+.promo{display:block;background:linear-gradient(90deg,#f59e0b,#ea580c);color:#1a0b08;text-decoration:none;padding:12px 14px;border-radius:10px;font-size:15px;margin:0 0 10px;box-shadow:0 1px 3px #0006;text-align:center}
+.money{background:#24162e;border:1px solid #3d2a4a;border-radius:10px;box-shadow:0 1px 3px #0006;padding:10px 14px;font-size:14px}
+/* layout: standings + hall side by side on desktop, picks full width */
+.grid{display:grid;grid-template-columns:minmax(0,1fr);grid-template-areas:"st" "pk" "hl";column-gap:24px}
+.s-st{grid-area:st} .s-pk{grid-area:pk} .s-hall{grid-area:hl}
+@media (min-width:900px){.grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"st hl" "pk pk";align-items:start}}
+/* picks grid */
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+.picks table{font-size:13px}
+.picks th.g{min-width:56px;padding:7px 4px;line-height:1.2} .picks td{padding:10px 4px}
+.picks th.mon{background:#7c2d12}
+.mu span{display:block} .mu span+span{font-weight:500;opacity:.9}
+.picks td.who,.picks th.who{position:sticky;left:0;z-index:2;min-width:112px;max-width:150px;overflow:hidden;text-overflow:ellipsis;padding-left:12px;box-shadow:2px 0 0 #3d2a4a}
+.picks td.who{background:#24162e} .picks tr.lead td.who{background:#3b2416} .picks th.who{background:#c2410c;z-index:3}
+.live{color:#fde047}
+.hint{display:none;font-size:12.5px;color:#fdba74;margin:0 2px 6px;font-weight:600}
+.picks.ovf+.hint,.hint.on{display:block}
+.fade{position:relative}
+.fade::after{content:"";position:absolute;top:0;right:0;bottom:0;width:28px;pointer-events:none;background:linear-gradient(90deg,transparent,#140c18cc);border-radius:0 12px 12px 0;opacity:0;transition:opacity .2s}
+.fade.more::after{opacity:1}
+#standings td.who{width:45%}
+.hall{border:2px solid #f59e0b;background:linear-gradient(180deg,#2a1a12,#24162e)}
+.hall th{background:#9a3412} .hall td.who{background:transparent}
+.hall td{white-space:normal;vertical-align:middle} .hall .tag{display:inline;margin-left:6px} .hall .wk{font-weight:700;color:#fdba74;white-space:nowrap}
 .hall .hnote{display:block;font-size:11px;color:#fbbf24;font-weight:600} .hall .dim{display:block}
 .hall .cash{font-weight:800;color:#86efac;white-space:nowrap} .xw{background:#ea580c;color:#fff;border-radius:8px;padding:0 6px;font-size:11px;margin-left:4px}
 .hall tr.tot td{background:#3b2416;font-weight:700;text-align:right;border-bottom:none} .hall tr.tot td.cash{text-align:center;font-size:15px}
 .hype{padding:10px 14px;font-size:14px;text-align:center;color:#fde68a;background:#3b2416;border-top:1px dashed #f59e0b}
-@media (max-width:480px){.hall table{font-size:13px} .hall th,.hall td{padding:6px 4px} .hall .tag{display:block;margin-left:22px}}
+@media (max-width:600px){
+ .wrap{padding:12px} header .wrap{padding:14px 14px 12px} h1{font-size:22px} h2{font-size:17px;margin:18px 0 8px}
+ .promo{font-size:14.5px;padding:12px} .money{font-size:14px}
+ table{font-size:14px} th,td{padding:9px 6px}
+ .picks th.g{min-width:46px;padding:6px 3px;font-size:11.5px} .picks td{padding:11px 3px;font-size:13px}
+ .picks td.who,.picks th.who{min-width:92px;max-width:104px;padding-left:10px}
+ .picks .tag{overflow:hidden;text-overflow:ellipsis}
+ .hall table{font-size:13px} .hall th,.hall td{padding:7px 5px} .hall .tag{display:block;margin-left:22px}
+}
 </style></head><body>
-<header><h1>🎃 Fam Bash Pickems</h1>
-<div class="meta">Week 5 2026 · Payout $10 · 1 entry · 0/15 games final Updated Wed Oct 7, 1:03 PM PT.</div></header>
-<main><a class="promo" href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank" rel="noopener">🎁 <b>REFERRAL BONUS:</b> Refer a friend and your next week's entry is FREE. <u>Tap here to get your referral code</u> 👉</a><div class="money">💵 Collected <b>$10</b> of $10 · Outstanding <b>$0</b> · Everyone has paid ✅</div>
-<h2>🏆 Hall of Champions</h2><div class="card hall"><table><tr><th>Week</th><th class="who">Champion</th><th>Correct</th><th>Winnings</th></tr><tr><td class="wk">Wk 4</td><td class="who">🏆 <b>Andy</b> <span class="xw">2x</span><span class="tag">Comish</span></td><td class="num">13/16<span class="hnote">won outright</span></td><td class="num cash">$100<span class="dim">10 entries</span></td></tr><tr><td class="wk">Wk 3</td><td class="who">🏆 <b>MRod</b><span class="tag">FAM BASH</span></td><td class="num">11/16<span class="hnote">won TB (35 vs 34)</span></td><td class="num cash">$120<span class="dim">12 entries</span></td></tr><tr><td class="wk">Wk 2</td><td class="who">🏆 <b>Chantal</b><span class="tag">NINOS BONITOS</span></td><td class="num">11/16<span class="hnote">won TB (46 vs 34)</span></td><td class="num cash">$130<span class="dim">13 entries</span></td></tr><tr><td class="wk">Wk 1</td><td class="who">🏆 <b>Andy</b> <span class="xw">2x</span><span class="tag">Comish</span></td><td class="num">11/16<span class="hnote">exact TB!</span></td><td class="num cash">$90<span class="dim">9 entries</span></td></tr><tr class="tot"><td colspan="3">Total paid out</td><td class="num cash">$440</td></tr></table><div class="hype">👀 Your name could be next. Week 5 champ gets <b>$10</b>. Who's taking it? 💰</div></div><h2>Standings</h2><div class="card" id="standings"><table><tr><th class="rk">#</th><th class="who">Player</th><th>Correct</th><th>TB</th><th>Paid</th></tr><tr class=""><td class="rk">1</td><td class="who"><span class="nm">Andy</span><span class="tag">Comish</span></td><td class="num">0</td><td class="num">🔒</td><td class="pd">Y</td></tr></table></div>
-<div class="legend">Monday picks and tiebreakers stay hidden until the last Sunday game is final. Tiebreaker: combined score of MNF BUF @ LAR (closest wins)</div>
-<h2>All picks</h2><div class="card"><table><tr><th class="who">Player</th><th>Paid</th><th><div>TB@DAL</div><div class="sub">Thu 10/8 5:15PM</div></th><th><div>PHI@JAX</div><div class="sub">Sun 10/11 6:30AM</div></th><th><div>HOU@TEN</div><div class="sub">Sun 10/11 10:00AM</div></th><th><div>CIN@MIA</div><div class="sub">Sun 10/11 10:00AM</div></th><th><div>LV@NE</div><div class="sub">Sun 10/11 10:00AM</div></th><th><div>MIN@NO</div><div class="sub">Sun 10/11 10:00AM</div></th><th><div>CLE@NYJ</div><div class="sub">Sun 10/11 10:00AM</div></th><th><div>IND@PIT</div><div class="sub">Sun 10/11 10:00AM</div></th><th><div>NYG@WAS</div><div class="sub">Sun 10/11 10:00AM</div></th><th><div>DEN@LAC</div><div class="sub">Sun 10/11 1:05PM</div></th><th><div>CHI@GB</div><div class="sub">Sun 10/11 10:00AM</div></th><th><div>DET@ARI</div><div class="sub">Sun 10/11 1:25PM</div></th><th><div>SF@SEA</div><div class="sub">Sun 10/11 1:25PM</div></th><th><div>BAL@ATL</div><div class="sub">Sun 10/11 5:20PM</div></th><th><div>BUF@LAR</div><div class="sub">Mon 10/12 5:15PM</div></th><th>TB</th><th>✔</th></tr><tr><td class="who"><span class="nm">Andy</span><span class="tag">Comish</span></td><td class="pd">Y</td><td class="">DAL</td><td class="">JAX</td><td class="">HOU</td><td class="">CIN</td><td class="">NE</td><td class="">MIN</td><td class="">CLE</td><td class="">IND</td><td class="">NYG</td><td class="">DEN</td><td class="">GB</td><td class="">DET</td><td class="">SF</td><td class="">ATL</td><td>🔒</td><td class="num">🔒</td><td class="num b">0</td></tr></table></div>
-<div class="legend"><span class="win">correct</span><span class="loss">wrong</span><span class="split">split, not played yet</span><span class="pd">paid</span><span class="up">unpaid</span> · Page reloads itself every 2 minutes.</div>
-</main></body></html>
+<header><div class="wrap"><h1>🎃 Fam Bash Pickems</h1>
+<div class="meta">Week 5 2026 · Payout $10 · 1 entry · 0/15 games final · Updated Wed Oct 7, 1:14 PM PT.</div></div></header>
+<main class="wrap"><a class="promo" href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank" rel="noopener">🎁 <b>REFERRAL BONUS:</b> Refer a friend and your next week's entry is FREE. <u>Tap here to get your referral code</u> 👉</a><div class="money">💵 Collected <b>$10</b> of $10 · Outstanding <b>$0</b> · Everyone has paid ✅</div>
+<div class="grid">
+<section class="s-st"><h2>Standings</h2><div class="card" id="standings"><table><tr><th class="rk">#</th><th class="who">Player</th><th>Correct</th><th>TB</th><th>Paid</th></tr><tr class=""><td class="rk">1</td><td class="who"><span class="nm">Andy</span><span class="tag">Comish</span></td><td class="num b">0</td><td class="num tbc"><span class="lk" title="Hidden until Sunday's games are final">🔒</span><span class="hidtxt">Hidden</span></td><td class="pd">Y</td></tr></table></div>
+<div class="note">Tiebreaker: combined score of MNF BUF @ LAR (closest wins)</div></section>
+<section class="s-hall"><h2>🏆 Hall of Champions</h2><div class="card hall"><table><tr><th>Week</th><th class="who">Champion</th><th>Correct</th><th>Winnings</th></tr><tr><td class="wk">Wk 4</td><td class="who">🏆 <b>Andy</b> <span class="xw">2x</span><span class="tag">Comish</span></td><td class="num">13/16<span class="hnote">won outright</span></td><td class="num cash">$100<span class="dim">10 entries</span></td></tr><tr><td class="wk">Wk 3</td><td class="who">🏆 <b>MRod</b><span class="tag">FAM BASH</span></td><td class="num">11/16<span class="hnote">won TB (35 vs 34)</span></td><td class="num cash">$120<span class="dim">12 entries</span></td></tr><tr><td class="wk">Wk 2</td><td class="who">🏆 <b>Chantal</b><span class="tag">NINOS BONITOS</span></td><td class="num">11/16<span class="hnote">won TB (46 vs 34)</span></td><td class="num cash">$130<span class="dim">13 entries</span></td></tr><tr><td class="wk">Wk 1</td><td class="who">🏆 <b>Andy</b> <span class="xw">2x</span><span class="tag">Comish</span></td><td class="num">11/16<span class="hnote">exact TB!</span></td><td class="num cash">$90<span class="dim">9 entries</span></td></tr><tr class="tot"><td colspan="3">Total paid out</td><td class="num cash">$440</td></tr></table><div class="hype">👀 Your name could be next. Week 5 champ gets <b>$10</b>. Who's taking it? 💰</div></div></section>
+<section class="s-pk"><h2>All picks</h2><div class="lockbox">🔒 <b>Hidden until Sunday's games are final.</b> Monday night picks (BUF @ LAR) and everyone's tiebreaker are revealed once the last Sunday game ends.</div>
+<div class="hint" id="hint">👉 Swipe sideways on the picks to see every game</div>
+<div class="card fade" id="pfade"><div class="scroll picks" id="picks"><table><tr><th class="who">Player</th><th class="g" title="TB @ DAL · Thu 10/8 5:15PM PT"><div class="mu"><span>TB</span><span>@DAL</span></div><div class="sub">Thu 5:15p</div></th><th class="g" title="PHI @ JAX · Sun 10/11 6:30AM PT"><div class="mu"><span>PHI</span><span>@JAX</span></div><div class="sub">Sun 6:30a</div></th><th class="g" title="HOU @ TEN · Sun 10/11 10:00AM PT"><div class="mu"><span>HOU</span><span>@TEN</span></div><div class="sub">Sun 10a</div></th><th class="g" title="CIN @ MIA · Sun 10/11 10:00AM PT"><div class="mu"><span>CIN</span><span>@MIA</span></div><div class="sub">Sun 10a</div></th><th class="g" title="LV @ NE · Sun 10/11 10:00AM PT"><div class="mu"><span>LV</span><span>@NE</span></div><div class="sub">Sun 10a</div></th><th class="g" title="MIN @ NO · Sun 10/11 10:00AM PT"><div class="mu"><span>MIN</span><span>@NO</span></div><div class="sub">Sun 10a</div></th><th class="g" title="CLE @ NYJ · Sun 10/11 10:00AM PT"><div class="mu"><span>CLE</span><span>@NYJ</span></div><div class="sub">Sun 10a</div></th><th class="g" title="IND @ PIT · Sun 10/11 10:00AM PT"><div class="mu"><span>IND</span><span>@PIT</span></div><div class="sub">Sun 10a</div></th><th class="g" title="NYG @ WAS · Sun 10/11 10:00AM PT"><div class="mu"><span>NYG</span><span>@WAS</span></div><div class="sub">Sun 10a</div></th><th class="g" title="DEN @ LAC · Sun 10/11 1:05PM PT"><div class="mu"><span>DEN</span><span>@LAC</span></div><div class="sub">Sun 1:05p</div></th><th class="g" title="CHI @ GB · Sun 10/11 10:00AM PT"><div class="mu"><span>CHI</span><span>@GB</span></div><div class="sub">Sun 10a</div></th><th class="g" title="DET @ ARI · Sun 10/11 1:25PM PT"><div class="mu"><span>DET</span><span>@ARI</span></div><div class="sub">Sun 1:25p</div></th><th class="g" title="SF @ SEA · Sun 10/11 1:25PM PT"><div class="mu"><span>SF</span><span>@SEA</span></div><div class="sub">Sun 1:25p</div></th><th class="g" title="BAL @ ATL · Sun 10/11 5:20PM PT"><div class="mu"><span>BAL</span><span>@ATL</span></div><div class="sub">Sun 5:20p</div></th><th class="g mon" title="BUF @ LAR · Mon 10/12 5:15PM PT"><div class="mu"><span>BUF</span><span>@LAR</span></div><div class="sub">🔒 MNF</div></th><th class="g">TB</th><th class="g">✔</th></tr><tr class=""><td class="who"><span class="nm">Andy</span><span class="tag">Comish</span></td><td class="">DAL</td><td class="">JAX</td><td class="">HOU</td><td class="">CIN</td><td class="">NE</td><td class="">MIN</td><td class="">CLE</td><td class="">IND</td><td class="">NYG</td><td class="">DEN</td><td class="">GB</td><td class="">DET</td><td class="">SF</td><td class="">ATL</td><td class="hid"><span class="lk" title="Hidden until Sunday's games are final">🔒</span></td><td class="num hid"><span class="lk" title="Hidden until Sunday's games are final">🔒</span></td><td class="num b">0</td></tr></table></div></div>
+<div class="legend"><span class="win">correct</span><span class="loss">wrong</span><span class="split">split, not played yet</span><span class="hid">🔒 hidden till Sunday is final</span><span class="pd">paid</span><span class="up">unpaid</span> · Page reloads itself every 2 minutes.</div>
+</section>
+</div>
+</main>
+<script>
+(function(){var s=document.getElementById('picks'),f=document.getElementById('pfade'),h=document.getElementById('hint');
+function u(){var o=s.scrollWidth>s.clientWidth+2;h.className=o?'hint on':'hint';f.className='card fade'+(o&&s.scrollLeft+s.clientWidth<s.scrollWidth-4?' more':'');}
+s.addEventListener('scroll',u,{passive:true});window.addEventListener('resize',u);u();})();
+</script>
+</body></html>

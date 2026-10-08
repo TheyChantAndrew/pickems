@@ -7,6 +7,8 @@
    entry shows within a poll instead of waiting for the box sync. Once the sync puts it on the board, the row is
    adopted in place (no reload); if the entry disappears from the server, the row is removed.
    A new week, or a real board player added/removed, triggers ONE full reload instead (never a loop).
+   Final pick lock: past status.submit_close_iso (or #status-card[data-submit-close]) the page is shown closed even if
+   the board JSON hasn't changed: data-submit="closed", data-picks="locked", lock text "All picks locked" (see below).
    Optional config before this script: window.PICKEMS_LIVE = {url: "/board/current.json", interval: 60000,
    entries: "/api/entries" (false = no merge)}. Fires document "pickems:board" (detail = board incl. merged players,
    which carry web: true). Hook names map to status.text keys; "leader-short" reads text.leader_short. */
@@ -15,7 +17,7 @@
   var cfg = window.PICKEMS_LIVE || {};
   var URL_ = cfg.url || "/board/current.json", EVERY = cfg.interval || 60000, RELOAD_KEY = "pickems-live-reloaded";
   var ENTRIES = cfg.entries === false ? null : (cfg.entries || "/api/entries");
-  var timer = null, busy = false, first = null, lastEntries = null;
+  var timer = null, busy = false, first = null, lastEntries = null, lastReal = null, closeTimer = null;
   var TEXT_KEY = {"leader-short": "leader_short"};                    // data-hook name -> status.text key (else same name)
   var LOCK = {cls: "pick-hidden", text: "\uD83D\uDD12"};
 
@@ -153,12 +155,52 @@
     });
   }
 
+  // ---- final pick lock: status.submit_close_iso (fallback #status-card[data-submit-close]) ----
+  // The board JSON only changes on a publish, so a tab left open past the final lock (Monday picks + tiebreaker = last
+  // Sunday kickoff) would keep the pulsing button and "Picks open". Once Date.now() passes it, live.js shows what a fresh
+  // build would: the board handed to the hooks and to the pickems:board listeners is closed (submit_open false, no next
+  // lock, lock text "All picks locked"/"Final"), and #status-card gets data-submit="closed" + data-picks="locked" after
+  // the listeners run. live.js only ever closes, never reopens, so the more-closed value always wins.
+  function closeIso(st) {
+    var card = document.getElementById("status-card");
+    return (st && st.submit_close_iso) || (card && card.getAttribute("data-submit-close")) || null;
+  }
+  function pastClose(st) { var t = Date.parse(closeIso(st) || ""); return isFinite(t) && Date.now() >= t; }
+  function closedBoard(b) {
+    var out = {}, st = {}, tx = {}, k;
+    for (k in b) out[k] = b[k];
+    for (k in b.status) st[k] = b.status[k];
+    for (k in (b.status.text || {})) tx[k] = b.status.text[k];
+    st.submit_open = false; st.picks_locked = true; st.next_lock_iso = null; st.next_game = null;
+    tx.lock = st.state === "final" ? "Final" : "All picks locked";
+    st.text = tx; out.status = st; return out;
+  }
+  function enforceClosed(state) {
+    var card = document.getElementById("status-card"); if (!card) return;
+    setAttr(card, "data-submit", "closed"); setAttr(card, "data-picks", "locked");
+    var ll = document.getElementById("lock-lbl"); if (ll) setText(ll, "");
+    var s = state || card.getAttribute("data-state");
+    all('[data-hook="lock"]').forEach(function (el) { setText(el, s === "final" ? "Final" : "All picks locked"); });
+  }
+  function scheduleClose(st) {
+    if (closeTimer) { clearTimeout(closeTimer); closeTimer = null; }
+    var t = Date.parse(closeIso(st) || ""); if (!isFinite(t)) return;
+    var ms = t - Date.now();
+    if (ms <= 0) { enforceClosed(st && st.state); return; }
+    if (ms < 2147483647) closeTimer = setTimeout(function () {      // fires even with polling paused (hidden tab)
+      closeTimer = null; if (lastReal) apply(lastReal); else enforceClosed();
+    }, ms + 250);
+  }
+
   function apply(real, entries) {
     if (!real || !real.status) return;
+    lastReal = real;
     var realKeys = {}; (real.players || []).forEach(function (p) { realKeys[p.key] = 1; });
     all("tr[data-player][data-web]").forEach(function (tr) { if (realKeys[tr.getAttribute("data-player")]) tr.removeAttribute("data-web"); }); // synced: adopt in place
     if (needsReload(real)) return;
     var b = merge(real, entries === undefined ? lastEntries : entries);
+    var closed = pastClose(b.status);
+    if (closed) b = closedBoard(b);
     syncWebRows(real, b);
     var st = b.status, text = st.text || {}, byKey = {};
     (b.players || []).forEach(function (p) { byKey[p.key] = p; });
@@ -186,6 +228,8 @@
       setText(td, c.text);
     });
     try { document.dispatchEvent(new CustomEvent("pickems:board", {detail: b})); } catch (e) { /* old browsers */ }
+    if (closed || st.picks_locked === true) enforceClosed(st.state);  // after the listeners: closed wins
+    else scheduleClose(st);
   }
 
   function getJSON(u) {
@@ -210,6 +254,7 @@
   document.addEventListener("visibilitychange", function () {
     if (document.visibilityState === "visible") { refresh(); start(); } else { stop(); }
   });
+  scheduleClose(null);                                               // from the page's data-submit-close, before any fetch
   if (document.visibilityState !== "hidden") { refresh(); start(); }
   window.PickemsLive = {refresh: refresh, apply: apply, merge: merge, playerKey: playerKey};
 })();

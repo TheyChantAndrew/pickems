@@ -43,6 +43,19 @@ td.who,th.who{text-align:left}
 .status[data-state=open] .lockline b{font-size:21px} .status[data-state=final] .lockline{display:none}
 .cta{display:block;background:#15803d;border:2px solid #4ade80;color:#fff;text-decoration:none;padding:11px 14px;border-radius:12px;font-size:17px;margin:12px 0 2px;text-align:center;box-shadow:0 2px 0 #0b5d2a;min-height:52px}
 .cta span{display:block;font-size:13px;font-weight:400;color:#dcfce7;margin-top:3px} .cta:hover,.cta:focus-visible{background:#166534} .status[data-state=final] .cta{display:none}
+.cta:focus-visible{outline:3px solid #fde68a;outline-offset:3px}
+/* gentle pulse while picks can still be made: data-submit is server-rendered from status.submit_open (the listener keeps it
+   current on long-open tabs). Live state still pulses (Thu night / early Sunday games live, later games open). Only
+   transform + box-shadow animate, so no layout shift; .status has no overflow clip and its 14px padding holds the ring. */
+@keyframes cta-pulse{0%,100%{transform:scale(1);box-shadow:0 2px 0 #0b5d2a,0 0 0 0 rgba(74,222,128,.6),0 0 0 0 rgba(74,222,128,0)}
+ 50%{transform:scale(1.03);box-shadow:0 2px 0 #0b5d2a,0 0 0 8px rgba(74,222,128,.16),0 0 18px 4px rgba(74,222,128,.35)}}
+#status-card[data-submit=open]:not([data-state=final]) .cta{animation:cta-pulse 2s ease-in-out infinite;transform-origin:center;will-change:transform}
+#status-card[data-submit=open]:not([data-state=final]) .cta:hover,#status-card[data-submit=open]:not([data-state=final]) .cta:focus-visible{animation:none;transform:none}
+@media (prefers-reduced-motion:reduce){#status-card[data-submit=open]:not([data-state=final]) .cta{animation:none;transform:none;will-change:auto}}
+/* closed: no button. data-picks=locked = past the final pick lock (server-rendered from status.picks_locked; live.js also
+   sets it, and data-submit=closed, on tabs left open past status.submit_close_iso), so the badge stops saying "Picks open" */
+#status-card[data-submit=closed] .cta{display:none}
+.status[data-state=open][data-picks=locked] .pill{background:#475569;color:#fff} .status[data-state=open][data-picks=locked] .pill::before{content:"Picks locked"}
 .tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
 .tile{background:#1d1226;border:1px solid #3d2a4a;border-radius:12px;padding:8px 10px;min-width:0}
 .tile .k{font-size:11.5px;color:#d6c4a8;text-transform:uppercase;letter-spacing:.05em} .tile .v{font-size:19px;font-weight:800;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -124,9 +137,9 @@ tr.lead td.pick-win{background:#15803d} tr.lead td.pick-loss{background:#3a1420}
 <script src="/live.js" defer></script>
 </head><body>
 <header><div class="wrap"><h1>🎃 Fam Bash Pickems</h1>
-<div class="meta">Week 5 · 2026<span class="br"></span><span data-hook="updated">Updated Wed 6:33 PM PT</span></div></div></header>
+<div class="meta">Week 5 · 2026<span class="br"></span><span data-hook="updated">Updated Wed 6:43 PM PT</span></div></div></header>
 <main class="wrap">
-<section id="status-card" class="status" data-state="open" data-week="5" data-locked="true" aria-label="Week 5 status">
+<section id="status-card" class="status" data-state="open" data-week="5" data-locked="true" data-submit="open" data-picks="open" data-submit-close="2026-10-11T17:20:00-07:00" aria-label="Week 5 status">
 <div class="eyebrow"><span class="pill" aria-hidden="true"></span><span>Week 5 · <span data-hook="games-final">0</span> of 15 final</span></div>
 <div class="bigline">
 <div class="live-games" id="live-games"></div>
@@ -161,6 +174,7 @@ function q(x,r){return Array.prototype.slice.call((r||document).querySelectorAll
 function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 document.addEventListener('pickems:board',function(ev){var b=ev.detail||{},st=b.status||{},ps=b.players||[],L=st.leaders||[];
  var sc=document.getElementById('status-card');
+ if(sc&&typeof st.submit_open==='boolean')sc.setAttribute('data-submit',st.submit_open?'open':'closed');   // CTA pulse gate (CSS), no-op if no CTA was rendered
  if(sc&&sc.getAttribute('data-locked')==='true'&&st.sunday_final){try{var rk='pickems-reveal-'+b.week;if(!sessionStorage.getItem(rk)){sessionStorage.setItem(rk,'1');location.reload();return;}}catch(e){}}
  var lg=document.getElementById('live-games');if(lg)lg.innerHTML=(st.live_games||[]).map(function(g){return '<div class="lg"><b>'+esc(g.away)+' '+esc(g.away_score)+' – '+esc(g.home_score)+' '+esc(g.home)+'</b> <span class="clk">'+esc(g.clock||'LIVE')+'</span></div>';}).join('');
  q('[data-hook="games-final"]').forEach(function(e){e.textContent=st.games_final;});

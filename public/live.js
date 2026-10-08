@@ -12,6 +12,12 @@
    merged rows directly; paper players never), recomputes status.payout + text.payout, then paints the paid badges (.pdc),
    #unpaid-n and #owes with exactly the markup build_site's pickems:board listener writes, before dispatching the event. The
    listener reads the same updated players, so both write identical text and never fight. No paid_live = board JSON wins.
+   Deletes: /api/entries lists "tombstones" (names deleted in /admin with no live entry). On each successful poll, board
+   players that are web entries (online, matched on player.entry) with a tombstoned name and no live entry are dropped from
+   the board handed to the hooks and listeners (ranks, leaders, entries, pot, payout, splits recomputed) and their rows get
+   hidden + data-tomb="1" (never removed, so a restore just unhides them). Never because an entry is merely missing or a
+   poll failed (the last good list is kept); paper players are never touched. Tombstoned keys are ignored by the reload check,
+   so neither the hide nor the sync's later publish without that player reloads the page.
    Final pick lock: past status.submit_close_iso (or #status-card[data-submit-close]) the page is shown closed even if
    the board JSON hasn't changed: data-submit="closed", data-picks="locked", lock text "All picks locked" (see below).
    Optional config before this script: window.PICKEMS_LIVE = {url: "/board/current.json", interval: 60000,
@@ -22,7 +28,7 @@
   var cfg = window.PICKEMS_LIVE || {};
   var URL_ = cfg.url || "/board/current.json", EVERY = cfg.interval || 60000, RELOAD_KEY = "pickems-live-reloaded";
   var ENTRIES = cfg.entries === false ? null : (cfg.entries || "/api/entries");
-  var timer = null, busy = false, first = null, lastEntries = null, lastPaidLive = false, lastReal = null, closeTimer = null;
+  var timer = null, busy = false, first = null, lastEntries = null, lastPaidLive = false, lastTombs = [], lastReal = null, closeTimer = null;
   var TEXT_KEY = {"leader-short": "leader_short"};                    // data-hook name -> status.text key (else same name)
   var LOCK = {cls: "pick-hidden", text: "\uD83D\uDD12"};
 
@@ -77,7 +83,15 @@
       added.push(p);
     });
     if (!added.length) return b;
-    var out = JSON.parse(JSON.stringify(b)), ps = out.players.concat(added);
+    var out = JSON.parse(JSON.stringify(b));
+    restat(out, out.players.concat(added));
+    out.web_merged = added.length;
+    return out;
+  }
+
+  /** out.players := ps, then splits, order, ranks, leaders, entries, pot, payout (fee x paid) and their texts recomputed
+   *  (same rules as pickems_status / build_site). Mutates out (callers pass a copy). */
+  function restat(out, ps) {
     // split: a game not final/hidden where players disagree (no pick counts as its own value), like build_site
     out.games.forEach(function (g) {
       if (g.hidden || (g.status === "final" && g.winner)) return;
@@ -103,8 +117,37 @@
     s.text.pot = "$" + s.pot; s.text.entries = n + " " + (n === 1 ? "entry" : "entries");
     s.text.leader = leaders.length ? leaders.map(function (p) { return p.name; }).join(" & ") + " \u00B7 " + leaders[0].score : "\u2014";
     s.text.leader_short = leaderShort(leaders.map(function (p) { return p.name; }));
-    out.web_merged = added.length;
+    s.payout = fee * ps.filter(function (p) { return p.paid; }).length; s.text.payout = "$" + s.payout;
     return out;
+  }
+
+  /** {key: 1} for board players to drop: web entries (online + entry) whose name is tombstoned and not live in entries. */
+  function tombKeys(b, entries, tombs) {
+    var gone = {};
+    if (!b || !b.players || !tombs || !tombs.length) return gone;
+    var t = {}, live = {};
+    tombs.forEach(function (n) { if (typeof n === "string" && n) t[nameKey(n)] = 1; });
+    (entries || []).forEach(function (en) { if (en && en.name) live[nameKey(en.name)] = 1; });
+    b.players.forEach(function (p) { if (p.online === true && p.entry != null && t[nameKey(p.entry)] && !live[nameKey(p.entry)]) gone[p.key] = 1; });
+    return gone;
+  }
+  /** board without the tombstoned players, everything recomputed (pure; exported for tests). */
+  function dropTombstoned(b, entries, tombs) {
+    var gone = tombKeys(b, entries, tombs);
+    if (!Object.keys(gone).length) return b;
+    var out = JSON.parse(JSON.stringify(b));
+    restat(out, out.players.filter(function (p) { return !gone[p.key]; }));
+    out.tombstoned = Object.keys(gone);
+    return out;
+  }
+  function hideTombRows(real, gone) {
+    var realKeys = {}; (real.players || []).forEach(function (p) { realKeys[p.key] = 1; });
+    all("tr[data-player]").forEach(function (tr) {
+      var k = tr.getAttribute("data-player");
+      if (gone[k]) { if (!tr.hidden) tr.hidden = true; setAttr(tr, "data-tomb", "1"); }
+      else if (tr.hasAttribute("data-tomb") && realKeys[k]) { tr.removeAttribute("data-tomb"); tr.hidden = false; }  // restored
+      // not on the board any more (the sync published without it): stays hidden; a restore then comes back as a web row
+    });
   }
 
   /** board + public entries (paid_live) -> board whose synced web players carry the DB paid flag, payout recomputed (pure;
@@ -152,9 +195,14 @@
     }
   }
 
-  function needsReload(b) {
-    var week = String(b.week), keys = (b.players || []).map(function (p) { return p.key; }).sort();
-    var pw = pageWeek(), pp = pagePlayers();
+  function needsReload(b, gone) {
+    gone = gone || {};
+    var week = String(b.week), keys = (b.players || []).map(function (p) { return p.key; }).filter(function (k) { return !gone[k]; }).sort();
+    // tombstoned rows: ignored while gone (about to be / already hidden) and once the board no longer has them (the sync
+    // published without them); a restored one that is on the board counts again (it gets unhidden)
+    var onBoard = {}; keys.forEach(function (k) { onBoard[k] = 1; });
+    var tomb = {}; all("tr[data-player][data-tomb]").forEach(function (tr) { tomb[tr.getAttribute("data-player")] = 1; });
+    var pw = pageWeek(), pp = pagePlayers().filter(function (k) { return !gone[k] && (!tomb[k] || onBoard[k]); });
     if (!first) first = {week: week, keys: keys};                     // baseline when the page carries no hooks
     var changed = (pw !== null ? pw !== week : first.week !== week) ||
                   (pp.length ? pp.join("|") !== keys.join("|") : first.keys.join("|") !== keys.join("|"));
@@ -167,7 +215,7 @@
 
   // ---- merged web rows: cloned from an existing row of the same table, text only (never innerHTML) ----
   function fillRow(tr, p, fee) {
-    tr.setAttribute("data-web", "1"); tr.classList.remove("lead");
+    tr.setAttribute("data-web", "1"); tr.classList.remove("lead"); tr.removeAttribute("data-tomb"); tr.hidden = false;
     [tr].concat(all("[data-player]", tr)).forEach(function (el) { el.setAttribute("data-player", p.key); });
     var who = tr.querySelector("td.who");
     if (who) {
@@ -198,9 +246,10 @@
     all("tbody").forEach(function (tb) {
       var rows = all("tr[data-player]", tb), te = tb.querySelector("template[data-row]");
       // build_site's inert <template data-row> (works for an empty table); older pages: clone a real row
-      var tpl = (te && te.content && te.content.querySelector("tr")) || all("tr[data-player]:not([data-web])", tb)[0] || rows[0];
+      var tpl = (te && te.content && te.content.querySelector("tr")) || all("tr[data-player]:not([data-web]):not([data-tomb])", tb)[0] || rows[0];
       if (!tpl) return;                                                  // nothing to clone from in this table
-      var have = {}; rows.forEach(function (r) { have[r.getAttribute("data-player")] = 1; });
+      var have = {}; rows.forEach(function (r) { var k = r.getAttribute("data-player"); have[k] = 1;
+        if (want[k] && r.hasAttribute("data-tomb")) fillRow(r, want[k], fee); });       // restored after the sync dropped it
       Object.keys(want).forEach(function (k) { if (!have[k]) { var tr = tpl.cloneNode(true); fillRow(tr, want[k], fee); tb.appendChild(tr); } });
     });
   }
@@ -242,14 +291,16 @@
     }, ms + 250);
   }
 
-  function apply(real, entries, paidLive) {
+  function apply(real, entries, paidLive, tombs) {
     if (!real || !real.status) return;
     lastReal = real;
     var realKeys = {}; (real.players || []).forEach(function (p) { realKeys[p.key] = 1; });
     all("tr[data-player][data-web]").forEach(function (tr) { if (realKeys[tr.getAttribute("data-player")]) tr.removeAttribute("data-web"); }); // synced: adopt in place
-    if (needsReload(real)) return;
-    if (entries === undefined) { entries = lastEntries; paidLive = lastPaidLive; }
-    var b = applyPaid(merge(real, entries, paidLive), entries, paidLive);
+    if (entries === undefined) { entries = lastEntries; paidLive = lastPaidLive; tombs = lastTombs; }
+    var gone = tombKeys(real, entries, tombs);
+    if (needsReload(real, gone)) return;
+    hideTombRows(real, gone);
+    var b = applyPaid(merge(dropTombstoned(real, entries, tombs), entries, paidLive), entries, paidLive);
     var closed = pastClose(b.status);
     if (closed) b = closedBoard(b);
     syncWebRows(real, b);
@@ -293,10 +344,12 @@
     busy = true;
     getJSON(URL_).then(function (b) {
       if (!b) return;
-      if (!ENTRIES) return apply(b, null, false);
+      if (!ENTRIES) return apply(b, null, false, []);
       return getJSON(ENTRIES + "?week=" + encodeURIComponent(b.week)).then(function (r) {
-        if (r && r.ok && Array.isArray(r.entries) && String(r.week) === String(b.week)) { lastEntries = r.entries; lastPaidLive = r.paid_live === true; }  // keep the last good list on errors
-        apply(b, lastEntries, lastPaidLive);
+        if (r && r.ok && Array.isArray(r.entries) && String(r.week) === String(b.week)) {     // keep the last good lists on errors
+          lastEntries = r.entries; lastPaidLive = r.paid_live === true; lastTombs = Array.isArray(r.tombstones) ? r.tombstones : [];
+        }
+        apply(b, lastEntries, lastPaidLive, lastTombs);
       });
     }).catch(function () { /* offline / 404: try again next tick */ }).then(function () { busy = false; });
   }
@@ -308,5 +361,5 @@
   });
   scheduleClose(null);                                               // from the page's data-submit-close, before any fetch
   if (document.visibilityState !== "hidden") { refresh(); start(); }
-  window.PickemsLive = {refresh: refresh, apply: apply, merge: merge, applyPaid: applyPaid, playerKey: playerKey};
+  window.PickemsLive = {refresh: refresh, apply: apply, merge: merge, applyPaid: applyPaid, dropTombstoned: dropTombstoned, playerKey: playerKey};
 })();

@@ -4,6 +4,8 @@
  "entry_fee": 10,
  "open": true,
  "sunday_final": false,
+ "monday_final": false,
+ "week_done": false,
  "board_names": [],
  "games": [
   {
@@ -187,5 +189,5 @@
    "is_tiebreaker": true
   }
  ],
- "generated_at": "2026-10-07T17:38:47-07:00"
+ "generated_at": "2026-10-07T23:44:57-07:00"
 }

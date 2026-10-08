@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#140c18">
 <title>Who's paid · Fam Bash Pickems admin</title>
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<!-- Admin portal: paid toggles only. Not linked from the site. Access = the private link (#k=<token>, never sent to the
+<!-- Admin portal: paid toggles + Delete (logged, restorable). Not linked from the site. Access = the private link (#k=<token>, never sent to the
      server except as an Authorization header). Class/id contract for styling: HOOKS.md "ADMIN_HOOKS". -->
 <style>
 *{box-sizing:border-box}
@@ -58,6 +58,36 @@ body{font-family:-apple-system,system-ui,Segoe UI,Roboto,sans-serif;margin:0;bac
 .adm-empty{text-align:center;color:#d6c4a8;padding:24px 8px;font-size:15px}
 .adm-foot{font-size:12px;color:#a8957d;text-align:center;padding:16px 8px calc(24px + env(safe-area-inset-bottom));line-height:1.5}
 .adm-refresh{font:inherit;font-size:13px;font-weight:700;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid #f59e0b;background:transparent;color:#fdba74;cursor:pointer}
+.adm-del{font:inherit;font-size:13px;font-weight:700;min-height:44px;min-width:64px;padding:0 12px;margin-top:6px;border-radius:10px;
+ border:1px solid #f8717188;background:transparent;color:#fca5a5;cursor:pointer;touch-action:manipulation}
+.adm-del:hover,.adm-del:focus-visible{background:#7f1d1d55;border-color:#f87171;color:#fff1f2;outline:none;box-shadow:0 0 0 3px #f8717155}
+.adm-del:disabled{opacity:.5;cursor:progress}
+.adm-del[hidden]{display:none}
+.adm-dlg{width:min(420px,calc(100vw - 24px));max-height:calc(100vh - 24px);overflow:auto;padding:0;border:1px solid #f87171;border-radius:16px;
+ background:#24162e;color:#f6efe4;box-shadow:0 18px 50px #000c}
+.adm-dlg::backdrop{background:#0b050ecc}
+.adm-dlg-in{padding:18px 16px 16px}
+.adm-dlg-title{margin:0 0 8px;font-size:20px;line-height:1.25;overflow-wrap:anywhere}
+.adm-dlg-who{margin:0 0 6px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.adm-dlg-who .adm-tag{margin-top:0}
+.adm-dlg-paid{font-size:12px;font-weight:800;letter-spacing:.4px;border-radius:6px;padding:1px 7px;background:#4b3460;color:#fdba74}
+.adm-dlg-paid.is-paid{background:#15803d;color:#f0fdf4}
+.adm-dlg-sub{margin:0 0 10px;font-size:13px;color:#d6c4a8;line-height:1.4}
+.adm-dlg-warn{margin:0 0 10px;padding:10px 12px;border-radius:10px;font-size:14.5px;line-height:1.4;font-weight:600}
+.adm-dlg-warn.is-paid{background:#7c2d12;border:1px solid #fb923c;color:#ffedd5}
+.adm-dlg-warn.is-mnf{background:#422006;border:1px solid #f59e0b;color:#fde68a}
+.adm-dlg-warn[hidden],.adm-dlg-err[hidden]{display:none}
+.adm-dlg-note{margin:0 0 12px;font-size:12.5px;color:#a8957d;line-height:1.4}
+.adm-dlg-err{margin:0 0 12px;padding:10px 12px;border-radius:10px;font-size:14.5px;line-height:1.4;background:#7f1d1d;border:1px solid #f87171;color:#fff1f2}
+.adm-dlg-btns{display:flex;gap:10px;justify-content:flex-end}
+.adm-dlg-btns button{font:inherit;font-size:16px;font-weight:800;min-height:48px;min-width:110px;padding:0 18px;border-radius:12px;cursor:pointer;touch-action:manipulation}
+.adm-dlg-cancel{border:1px solid #6b4a85;background:#3b2a4a;color:#f6efe4}
+.adm-dlg-ok{border:1px solid #fca5a5;background:#dc2626;color:#fff}
+.adm-dlg-btns button:focus-visible{outline:3px solid #f59e0b;outline-offset:2px}
+.adm-dlg-ok:disabled,.adm-dlg-cancel:disabled{opacity:.55;cursor:not-allowed}
+.adm-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom));max-width:calc(100vw - 24px);
+ background:#14532d;border:1px solid #22c55e;color:#f0fdf4;border-radius:12px;padding:10px 14px;font-size:14.5px;font-weight:700;box-shadow:0 6px 20px #000a;z-index:5}
+.adm-toast[hidden]{display:none}
 @media (min-width:760px){
  .adm-title{font-size:25px} .adm-main{padding:18px}
  .adm-totals{grid-template-columns:repeat(4,1fr)}
@@ -79,11 +109,13 @@ body{font-family:-apple-system,system-ui,Segoe UI,Roboto,sans-serif;margin:0;bac
     <div class="adm-owes" id="adm-owes" aria-live="polite">Loading…</div>
   </section>
   <ul id="adm-list" class="adm-list" aria-label="Entries"></ul>
-  <p class="adm-foot">Tap a switch to mark paid. It saves right away and the public board catches up within a minute.<br>
+  <p class="adm-foot">Tap a switch to mark paid. It saves right away and the public board catches up within a minute.
+    Delete removes an entry (it's logged and can be restored).<br>
     <button type="button" class="adm-refresh" id="adm-refresh">Refresh</button></p>
 </main>
 <template id="adm-row-tpl"><li class="adm-row">
-  <div class="adm-who"><span class="adm-name"></span><span class="adm-tag"></span><div class="adm-sub"><span class="adm-when"></span><span class="adm-paidat"></span></div></div>
+  <div class="adm-who"><span class="adm-name"></span><span class="adm-tag"></span><div class="adm-sub"><span class="adm-when"></span><span class="adm-paidat"></span></div>
+    <button type="button" class="adm-del" hidden>Delete</button></div>
   <div class="adm-ctl">
     <label class="adm-toggle"><input type="checkbox" class="adm-cb" role="switch"><span class="adm-track"><span class="adm-knob"></span></span></label>
     <span class="adm-lbl"></span>
@@ -91,6 +123,19 @@ body{font-family:-apple-system,system-ui,Segoe UI,Roboto,sans-serif;margin:0;bac
     <button type="button" class="adm-retry" hidden>Retry</button>
   </div>
 </li></template>
+<dialog id="adm-dlg" class="adm-dlg" aria-labelledby="adm-dlg-title" aria-describedby="adm-dlg-body"><div class="adm-dlg-in">
+  <h2 id="adm-dlg-title" class="adm-dlg-title"></h2>
+  <div id="adm-dlg-body">
+    <p class="adm-dlg-who"><span id="adm-dlg-tag" class="adm-tag"></span><span id="adm-dlg-paid" class="adm-dlg-paid"></span></p>
+    <p id="adm-dlg-sub" class="adm-dlg-sub"></p>
+    <p id="adm-dlg-paidwarn" class="adm-dlg-warn is-paid" hidden></p>
+    <p id="adm-dlg-mnfwarn" class="adm-dlg-warn is-mnf" hidden></p>
+    <p class="adm-dlg-note">Their picks come off the public board within a minute. The entry is logged and can be restored.</p>
+  </div>
+  <div id="adm-dlg-err" class="adm-dlg-err" role="alert" hidden></div>
+  <div class="adm-dlg-btns"><button type="button" id="adm-dlg-cancel" class="adm-dlg-cancel">Cancel</button><button type="button" id="adm-dlg-ok" class="adm-dlg-ok">Delete</button></div>
+</div></dialog>
+<div id="adm-toast" class="adm-toast" role="status" aria-live="polite" hidden></div>
 <script src="/admin.js" defer></script>
 </body>
 </html>

@@ -14,7 +14,7 @@ module.exports = handler(['GET', 'POST'], async (req, res, db, now) => {
     const q = query(req), week = Number(q.week || data.currentWeek()), wd = data.loadWeek(week);
     if (!wd) return send(res, 404, {ok: false, error: `Week ${q.week || '?'} is not set up yet.`, code: 'WEEK'}, H);
     return send(res, 200, {ok: true, week, current_week: data.currentWeek(), weeks: data.weeks(), fee: Number(wd.entry_fee || 10),
-                           paid_live: await core.paidLive(db, week), board_names: wd.board_names || [],
+                           paid_live: await core.paidLive(db, week), board_names: wd.board_names || [], delete_state: core.deleteState(wd, now),
                            entries: core.paidEntries(await core.readAll(db, week))}, H);
   }
   const b = await jsonBody(req);

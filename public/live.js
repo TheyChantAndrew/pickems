@@ -3,7 +3,7 @@
    the tab becomes visible again; then patch the page in place through data hooks. Missing hooks are no-ops.
    Web entries: each poll also reads the public /api/entries?week=N (Turso, Monday picks + tiebreakers already
    omitted until Sunday is final) and merges any entry the board doesn't have yet as an unpaid row (cloned from an
-   existing row, marked data-web="1"), scored with the board's results by the same rules as pickems_status, so a new
+   build_site <template data-row> or an existing row, marked data-web="1"), scored with the board's results by the same rules as pickems_status, so a new
    entry shows within a poll instead of waiting for the box sync. Once the sync puts it on the board, the row is
    adopted in place (no reload); if the entry disappears from the server, the row is removed.
    A new week, or a real board player added/removed, triggers ONE full reload instead (never a loop).
@@ -144,9 +144,11 @@
     });
     var fee = Number(aug.fee != null ? aug.fee : 10);
     all("tbody").forEach(function (tb) {
-      var rows = all("tr[data-player]", tb); if (!rows.length) return;  // no row to clone from in this table
+      var rows = all("tr[data-player]", tb), te = tb.querySelector("template[data-row]");
+      // build_site's inert <template data-row> (works for an empty table); older pages: clone a real row
+      var tpl = (te && te.content && te.content.querySelector("tr")) || all("tr[data-player]:not([data-web])", tb)[0] || rows[0];
+      if (!tpl) return;                                                  // nothing to clone from in this table
       var have = {}; rows.forEach(function (r) { have[r.getAttribute("data-player")] = 1; });
-      var tpl = all("tr[data-player]:not([data-web])", tb)[0] || rows[0];
       Object.keys(want).forEach(function (k) { if (!have[k]) { var tr = tpl.cloneNode(true); fillRow(tr, want[k], fee); tb.appendChild(tr); } });
     });
   }

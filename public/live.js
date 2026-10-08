@@ -7,6 +7,11 @@
    entry shows within a poll instead of waiting for the box sync. Once the sync puts it on the board, the row is
    adopted in place (no reload); if the entry disappears from the server, the row is removed.
    A new week, or a real board player added/removed, triggers ONE full reload instead (never a loop).
+   Paid (Turso is the source of truth for web entries, toggled in /admin): when /api/entries says paid_live, each poll and
+   page load applies every entry's paid to the board players it belongs to (synced web rows matched on player.entry/key,
+   merged rows directly; paper players never), recomputes status.payout + text.payout, then paints the paid badges (.pdc),
+   #unpaid-n and #owes with exactly the markup build_site's pickems:board listener writes, before dispatching the event. The
+   listener reads the same updated players, so both write identical text and never fight. No paid_live = board JSON wins.
    Final pick lock: past status.submit_close_iso (or #status-card[data-submit-close]) the page is shown closed even if
    the board JSON hasn't changed: data-submit="closed", data-picks="locked", lock text "All picks locked" (see below).
    Optional config before this script: window.PICKEMS_LIVE = {url: "/board/current.json", interval: 60000,
@@ -17,7 +22,7 @@
   var cfg = window.PICKEMS_LIVE || {};
   var URL_ = cfg.url || "/board/current.json", EVERY = cfg.interval || 60000, RELOAD_KEY = "pickems-live-reloaded";
   var ENTRIES = cfg.entries === false ? null : (cfg.entries || "/api/entries");
-  var timer = null, busy = false, first = null, lastEntries = null, lastReal = null, closeTimer = null;
+  var timer = null, busy = false, first = null, lastEntries = null, lastPaidLive = false, lastReal = null, closeTimer = null;
   var TEXT_KEY = {"leader-short": "leader_short"};                    // data-hook name -> status.text key (else same name)
   var LOCK = {cls: "pick-hidden", text: "\uD83D\uDD12"};
 
@@ -43,12 +48,12 @@
   }
 
   /** board + public web entries -> board with every not-yet-synced web entry merged in (pure; exported for tests). */
-  function merge(b, entries) {
+  function merge(b, entries, paidLive) {
     if (!b || !b.players || !b.games || !entries || !entries.length) return b;
     var st = b.status || {}, revealed = !!st.sunday_final, abbr = b.abbr || {};
     var ab = function (t) { return abbr[t] || String(t).slice(0, 3).toUpperCase(); };
     var keys = {}, names = {};
-    b.players.forEach(function (p) { keys[p.key] = 1; names[nameKey(p.name)] = 1; });
+    b.players.forEach(function (p) { keys[p.key] = 1; names[nameKey(p.name)] = 1; if (p.entry != null) names[nameKey(p.entry)] = 1; });
     var added = [];
     entries.forEach(function (en) {
       if (!en || !en.name) return;
@@ -66,7 +71,7 @@
       var tb = revealed && en.tiebreaker != null && en.tiebreaker !== "" ? Number(en.tiebreaker) : null;
       picks.tb = revealed ? {cls: "pick-tb", text: tb != null && isFinite(tb) ? String(Math.trunc(tb)) : "\u2014"} : LOCK;
       var tag = stripTag(en.tag), p = {key: k, name: String(en.name), tag: tag, display: tag ? en.name + " (" + tag + ")" : String(en.name),
-               rank: 0, score: score, leader: false, paid: false, picks: picks, web: true};
+               rank: 0, score: score, leader: false, paid: !!(paidLive && en.paid === true), picks: picks, web: true};
       if (revealed) { p.tiebreaker = tb != null && isFinite(tb) ? Math.trunc(tb) : null;
         if (p.tiebreaker != null && b.mnf_total != null) p.tiebreaker_off = Math.abs(p.tiebreaker - Number(b.mnf_total)); }
       added.push(p);
@@ -102,6 +107,51 @@
     return out;
   }
 
+  /** board + public entries (paid_live) -> board whose synced web players carry the DB paid flag, payout recomputed (pure;
+   *  exported for tests). Merged rows (p.web) already got theirs in merge(). Paper players (online false) are never touched. */
+  function applyPaid(b, entries, paidLive) {
+    if (!paidLive || !b || !b.players || !b.status || !entries) return b;
+    var byName = {}, byKey = {};
+    entries.forEach(function (en) {
+      if (!en || !en.name || typeof en.paid !== "boolean") return;
+      byName[nameKey(en.name)] = en; byKey[playerKey(en.name, en.tag)] = en;
+    });
+    var out = JSON.parse(JSON.stringify(b));
+    out.players.forEach(function (p) {
+      if (p.web || p.online === false) return;
+      var en = p.entry != null ? byName[nameKey(p.entry)] : (byKey[p.key] || byName[nameKey(p.name)]);
+      if (en) p.paid = en.paid;
+    });
+    var fee = Number(out.fee != null ? out.fee : 10), s = out.status;
+    s.payout = fee * out.players.filter(function (p) { return p.paid; }).length;
+    s.text = s.text || {}; s.text.payout = "$" + s.payout;
+    return out;
+  }
+  /** Paid badges / unpaid count / Still-owes line from b.players: same markup + text as build_site's listener. */
+  function paintPaid(b) {
+    var ps = b.players || [], byKey = {}, fee0 = Number(b.fee != null ? b.fee : 10);
+    ps.forEach(function (p) { byKey[p.key] = p; });
+    all("tr[data-player] .pdc").forEach(function (pd) {
+      var p = byKey[pd.closest("tr").getAttribute("data-player")]; if (!p) return;
+      var cls = p.paid ? "paid" : "owe", txt = p.paid ? "\u2713 paid" : "owes $" + (pd.getAttribute("data-fee") || fee0);
+      var cur = pd.firstElementChild;
+      if (pd.children.length === 1 && cur.className === cls && cur.textContent === txt && pd.childNodes.length === 1) return;
+      while (pd.firstChild) pd.removeChild(pd.firstChild);
+      var sp = document.createElement("span"); sp.className = cls; sp.textContent = txt; pd.appendChild(sp);
+    });
+    var up = ps.filter(function (p) { return !p.paid; });
+    var un = document.getElementById("unpaid-n"); if (un) setText(un, up.length ? up.length + " unpaid" : "all paid \u2705");
+    var ow = document.getElementById("owes");
+    if (ow) {
+      var names = up.map(function (p) { return p.name; }).join(", "), b0 = ow.querySelector("b");
+      if (!(up.length && b0 && b0.textContent === names && !ow.hidden) && !(!up.length && ow.hidden && !ow.textContent)) {
+        while (ow.firstChild) ow.removeChild(ow.firstChild);
+        if (up.length) { ow.appendChild(document.createTextNode("\uD83D\uDCB5 Still owes: ")); var bb = document.createElement("b"); bb.textContent = names; ow.appendChild(bb); }
+        ow.hidden = !up.length;
+      }
+    }
+  }
+
   function needsReload(b) {
     var week = String(b.week), keys = (b.players || []).map(function (p) { return p.key; }).sort();
     var pw = pageWeek(), pp = pagePlayers();
@@ -135,7 +185,7 @@
     var rk = tr.querySelector(".rkt"); if (rk) rk.textContent = String(p.rank);
     var tbc = tr.querySelector("td.tbc"); if (tbc) tbc.textContent = p.tiebreaker != null ? String(p.tiebreaker) : "\u2014";
     var pd = tr.querySelector(".pdc");
-    if (pd) { while (pd.firstChild) pd.removeChild(pd.firstChild); var o = document.createElement("span"); o.className = "owe"; o.textContent = "owes $" + fee; pd.appendChild(o); }
+    if (pd) { while (pd.firstChild) pd.removeChild(pd.firstChild); var o = document.createElement("span"); o.className = p.paid ? "paid" : "owe"; o.textContent = p.paid ? "\u2713 paid" : "owes $" + fee; pd.appendChild(o); }
   }
   function syncWebRows(real, aug) {
     var want = {};
@@ -192,13 +242,14 @@
     }, ms + 250);
   }
 
-  function apply(real, entries) {
+  function apply(real, entries, paidLive) {
     if (!real || !real.status) return;
     lastReal = real;
     var realKeys = {}; (real.players || []).forEach(function (p) { realKeys[p.key] = 1; });
     all("tr[data-player][data-web]").forEach(function (tr) { if (realKeys[tr.getAttribute("data-player")]) tr.removeAttribute("data-web"); }); // synced: adopt in place
     if (needsReload(real)) return;
-    var b = merge(real, entries === undefined ? lastEntries : entries);
+    if (entries === undefined) { entries = lastEntries; paidLive = lastPaidLive; }
+    var b = applyPaid(merge(real, entries, paidLive), entries, paidLive);
     var closed = pastClose(b.status);
     if (closed) b = closedBoard(b);
     syncWebRows(real, b);
@@ -227,6 +278,7 @@
       }
       setText(td, c.text);
     });
+    paintPaid(b);
     try { document.dispatchEvent(new CustomEvent("pickems:board", {detail: b})); } catch (e) { /* old browsers */ }
     if (closed || st.picks_locked === true) enforceClosed(st.state);  // after the listeners: closed wins
     else scheduleClose(st);
@@ -241,10 +293,10 @@
     busy = true;
     getJSON(URL_).then(function (b) {
       if (!b) return;
-      if (!ENTRIES) return apply(b, null);
+      if (!ENTRIES) return apply(b, null, false);
       return getJSON(ENTRIES + "?week=" + encodeURIComponent(b.week)).then(function (r) {
-        if (r && r.ok && Array.isArray(r.entries) && String(r.week) === String(b.week)) lastEntries = r.entries;  // keep the last good list on errors
-        apply(b, lastEntries);
+        if (r && r.ok && Array.isArray(r.entries) && String(r.week) === String(b.week)) { lastEntries = r.entries; lastPaidLive = r.paid_live === true; }  // keep the last good list on errors
+        apply(b, lastEntries, lastPaidLive);
       });
     }).catch(function () { /* offline / 404: try again next tick */ }).then(function () { busy = false; });
   }
@@ -256,5 +308,5 @@
   });
   scheduleClose(null);                                               // from the page's data-submit-close, before any fetch
   if (document.visibilityState !== "hidden") { refresh(); start(); }
-  window.PickemsLive = {refresh: refresh, apply: apply, merge: merge, playerKey: playerKey};
+  window.PickemsLive = {refresh: refresh, apply: apply, merge: merge, applyPaid: applyPaid, playerKey: playerKey};
 })();

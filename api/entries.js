@@ -1,4 +1,5 @@
-// GET /api/entries?week=N  public. Monday picks + tiebreakers hidden until Sunday is final. Never edit codes.
+// GET /api/entries?week=N  public. Monday picks + tiebreakers hidden until Sunday is final. Never edit codes or paid_at.
+// paid_live: true once this week's paid flags live in the DB (live.js then applies each entry's paid to the board).
 const {handler} = require('../lib/handler');
 const {send, query} = require('../lib/http');
 const data = require('../lib/data');
@@ -7,5 +8,5 @@ module.exports = handler(['GET'], async (req, res, db) => {
   const week = Number(query(req).week || data.currentWeek()), wd = data.loadWeek(week);
   if (!wd) return send(res, 404, {ok: false, error: `Week ${week || '?'} is not set up yet.`, code: 'WEEK'});
   const entries = core.publicEntries(await core.readAll(db, week), wd);
-  send(res, 200, {ok: true, week, sunday_final: !!wd.sunday_final, count: entries.length, entries});
+  send(res, 200, {ok: true, week, sunday_final: !!wd.sunday_final, paid_live: await core.paidLive(db, week), count: entries.length, entries});
 });

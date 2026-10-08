@@ -11,6 +11,7 @@ module.exports = handler(['GET'], async (req, res, db, now) => {
   if (!wd) return send(res, 404, {ok: false, error: `Week ${week || '?'} is not set up yet.`, code: 'WEEK'});
   const L = core.withLocks(wd, now);
   send(res, 200, {ok: true, week, now: new Date(now).toISOString(), current_week: data.currentWeek(), sunday_final: !!wd.sunday_final,
+                  paid_live: await core.paidLive(db, week),
                   board_names: wd.board_names || [], tiebreaker_game: L.tiebreaker_game, games: L.games,
                   entries: core.adminEntries(await core.readAll(db, week))});
 });

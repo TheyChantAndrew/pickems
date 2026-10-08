@@ -255,7 +255,8 @@ if(form){
       if(r.ok){
         state.code=r.edit_code; state.name=r.name; state.tag=r.tag; state.picks=r.picks||state.picks; save();
         $('#code').value=r.edit_code||'';
-        summary('<h3 id="okh" tabindex="-1">✅ '+esc(r.message)+'</h3>'+esc(r.picked)+' of '+esc(r.games)+' games picked'+(r.picked<r.games?' (the rest had already kicked off)':'')+(r.tiebreaker!=null?' · tiebreaker '+esc(r.tiebreaker):'')+
+        const extra=String(r.message||'').replace(/^(You're in for Week \d+!|Picks updated\.)\s*/,'');
+        summary('<h3 id="okh" tabindex="-1">✅ '+(r.status==='updated'?'Picks updated!':'You\'re in!')+'</h3><div class="okline">Your picks will show on the board within a minute.</div>'+(extra?'<div>'+esc(extra)+'</div>':'')+esc(r.picked)+' of '+esc(r.games)+' games picked'+(r.picked<r.games?' (the rest had already kicked off)':'')+(r.tiebreaker!=null?' · tiebreaker '+esc(r.tiebreaker):'')+
           (r.edit_code?'<div class="oklbl">Your edit code:</div><div class="okcode"><span class="code" id="okcode">'+esc(r.edit_code)+'</span><button type="button" class="btn2 copy" id="copy">Copy code</button></div><span class="small" style="color:#d1fae5">Screenshot it or copy it. You need it to change picks on another phone; this phone remembers it.</span>':'')+
           (r.paid?'':'<br><span class="small" style="color:#d1fae5">Pay Andy $'+D.fee+' to make it count. You show as unpaid until he marks you paid.</span>')+
           '<a class="board" href="./">See the board →</a>','ok');

@@ -2,12 +2,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1a0b08">
 <title>Fam Bash Pickems · Week 5</title>
-<meta name="description" content="Week 5 · payout $70 · 11 entries · picks lock Sun 6:30a PT · PHI @ JAX">
+<meta name="description" content="Week 5 · payout $70 · 11 entries · 0/15 games final">
 <meta property="og:type" content="website"><meta property="og:site_name" content="Fam Bash Pickems">
 <meta property="og:title" content="🎃 Fam Bash Pickems · Week 5">
-<meta property="og:description" content="Week 5 · payout $70 · 11 entries · picks lock Sun 6:30a PT · PHI @ JAX"><meta property="og:url" content="https://fambash-pickems.vercel.app/">
+<meta property="og:description" content="Week 5 · payout $70 · 11 entries · 0/15 games final"><meta property="og:url" content="https://fambash-pickems.vercel.app/">
 <meta property="og:image" content="https://fambash-pickems.vercel.app/og-image.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Fam Bash Pickems: weekly NFL pick'em">
-<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Fam Bash Pickems · Week 5"><meta name="twitter:description" content="Week 5 · payout $70 · 11 entries · picks lock Sun 6:30a PT · PHI @ JAX"><meta name="twitter:image" content="https://fambash-pickems.vercel.app/og-image.png">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Fam Bash Pickems · Week 5"><meta name="twitter:description" content="Week 5 · payout $70 · 11 entries · 0/15 games final"><meta name="twitter:image" content="https://fambash-pickems.vercel.app/og-image.png">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%83%3C/text%3E%3C/svg%3E"><link rel="apple-touch-icon" sizes="180x180" href="https://fambash-pickems.vercel.app/apple-touch-icon.png">
 <style>
 *{box-sizing:border-box}
@@ -58,6 +58,15 @@ td.who,td.who .nm,td.who .tag{white-space:nowrap;overflow:hidden;text-overflow:e
    sets it, and data-submit=closed, on tabs left open past status.submit_close_iso), so the badge stops saying "Picks open" */
 #status-card[data-submit=closed] .cta{display:none}
 .status[data-state=open][data-picks=locked] .pill{background:#475569;color:#fff} .status[data-state=open][data-picks=locked] .pill::before{content:"Picks locked"}
+/* locked banner: in place of the button once picks lock (all at the first kickoff). Calm, not an alert: the card's dark
+   plum, a soft amber edge, the lock line in cream, the pay reminder smaller in the card's muted orange. Hidden before the
+   lock and once the week is final. */
+.lockbanner{display:none;margin:12px 0 2px;padding:11px 14px;border-radius:12px;background:#1d1226;border:1px solid #5b4170;
+ border-left:4px solid #f59e0b;text-align:center;min-height:52px}
+#status-card[data-submit=closed][data-picks=locked]:not([data-state=final]) .lockbanner{display:block}
+.lockbanner-t{display:block;font-size:17px;font-weight:800;color:#fff8ee;line-height:1.3}
+.lockbanner-r{display:block;font-size:13px;font-weight:600;color:#fdba74;margin-top:4px;line-height:1.35}
+#status-card[data-submit=closed][data-picks=locked] .lockline{display:none}   /* the banner says it */
 .tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
 .tile{background:#1d1226;border:1px solid #3d2a4a;border-radius:12px;padding:8px 10px;min-width:0}
 .tile .k{font-size:11.5px;color:#d6c4a8;text-transform:uppercase;letter-spacing:.05em} .tile .v{font-size:19px;font-weight:800;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -84,7 +93,10 @@ tr.lead td{background:#3b2416}
 @media (min-width:900px){.grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"st hl" "pk pk";align-items:start}
  .status{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);column-gap:20px;align-items:center}
  .status .eyebrow,.status .bigline,.status .money{grid-column:1} .status .cta{grid-column:2;grid-row:1/3;margin:0} .status .tiles{grid-column:2;margin-top:10px}
- .status .money{grid-row:3} .jump{max-width:520px;margin-left:0;margin-right:0;padding-left:0;background:none;border:0;-webkit-backdrop-filter:none;backdrop-filter:none;position:static}}
+ .status .money{grid-row:3}
+ .status .lockbanner{grid-column:1;grid-row:3;margin:8px 0 4px;text-align:left}   /* where the "Picks lock" line was; tiles on the right */
+ #status-card[data-submit=closed][data-picks=locked]:not([data-state=final]) .money{grid-row:4}
+ #status-card[data-submit=closed][data-picks=locked]:not([data-state=final]) .tiles{grid-row:1/5;margin-top:0} .jump{max-width:520px;margin-left:0;margin-right:0;padding-left:0;background:none;border:0;-webkit-backdrop-filter:none;backdrop-filter:none;position:static}}
 /* picks grid */
 .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
 .picks table{font-size:13.5px}
@@ -142,14 +154,14 @@ tr.lead td.pick-win{background:#15803d} tr.lead td.pick-loss{background:#3a1420}
 <script src="/live.js" defer></script>
 </head><body>
 <header><div class="wrap"><h1>🎃 Fam Bash Pickems</h1>
-<div class="meta">Week 5 · 2026<span class="br"></span><span data-hook="updated">Updated Thu 5:25 PM PT</span></div></div></header>
+<div class="meta">Week 5 · 2026<span class="br"></span><span data-hook="updated">Updated Thu 5:36 PM PT</span></div></div></header>
 <main class="wrap">
-<section id="status-card" class="status" data-state="open" data-week="5" data-locked="true" data-submit="open" data-picks="open" data-submit-close="2026-10-11T17:20:00-07:00" aria-label="Week 5 status">
+<section id="status-card" class="status" data-state="open" data-week="5" data-locked="true" data-submit="closed" data-picks="locked" data-submit-close="2026-10-08T17:15:00-07:00" aria-label="Week 5 status">
 <div class="eyebrow"><span class="pill" aria-hidden="true"></span><span>Week 5 · <span data-hook="games-final">0</span> of 15 final</span></div>
 <div class="bigline">
 <div class="live-games" id="live-games"></div>
-<div class="lockline"><span class="lbl" id="lock-lbl">Picks lock</span> <b data-hook="lock">Sun 6:30a PT · PHI @ JAX</b></div></div>
-<a class="cta" href="/submit">📝 <b>Make your Week 5 picks</b><span>Pick every game + tiebreaker right here. No sign-up. Each pick locks at kickoff.</span></a>
+<div class="lockline"><span class="lbl" id="lock-lbl"></span> <b data-hook="lock">All picks locked</b></div></div>
+<div class="lockbanner" role="status"><b class="lockbanner-t"><span class="lockbanner-i" aria-hidden="true">🔒</span> Pickems has started — picks are locked.</b><span class="lockbanner-r">Reminder: pay the Comish or your entry is voided at first win.</span></div>
 <div class="tiles" id="tiles">
 <div class="tile"><div class="k">Payout</div><div class="v" data-hook="payout">$70</div><div class="s">of <span data-hook="pot">$110</span> pot</div></div>
 <div class="tile"><div class="k">Entries</div><div class="v" data-hook="entries">11 entries</div><div class="s" id="unpaid-n">4 unpaid</div></div>

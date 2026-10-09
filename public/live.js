@@ -18,7 +18,7 @@
    hidden + data-tomb="1" (never removed, so a restore just unhides them). Never because an entry is merely missing or a
    poll failed (the last good list is kept); paper players are never touched. Tombstoned keys are ignored by the reload check,
    so neither the hide nor the sync's later publish without that player reloads the page.
-   Final pick lock: past status.submit_close_iso (or #status-card[data-submit-close]) the page is shown closed even if
+   Pick lock (the first kickoff): past status.submit_close_iso (or #status-card[data-submit-close]) the page is shown closed even if
    the board JSON hasn't changed: data-submit="closed", data-picks="locked", lock text "All picks locked" (see below).
    Optional config before this script: window.PICKEMS_LIVE = {url: "/board/current.json", interval: 60000,
    entries: "/api/entries" (false = no merge)}. Fires document "pickems:board" (detail = board incl. merged players,
@@ -254,12 +254,14 @@
     });
   }
 
-  // ---- final pick lock: status.submit_close_iso (fallback #status-card[data-submit-close]) ----
-  // The board JSON only changes on a publish, so a tab left open past the final lock (Monday picks + tiebreaker = last
-  // Sunday kickoff) would keep the pulsing button and "Picks open". Once Date.now() passes it, live.js shows what a fresh
+  // ---- the pick lock: status.submit_close_iso (fallback #status-card[data-submit-close]) ----
+  // Since 2026-10-08 ALL picks (every game, the Monday pick, the tiebreaker) lock at the week's FIRST kickoff, and
+  // pickems_status sets submit_close_iso to it. The board JSON only changes on a publish, so a tab left open past the lock
+  // would keep the pulsing button and "Picks open". Once Date.now() passes it, live.js shows what a fresh
   // build would: the board handed to the hooks and to the pickems:board listeners is closed (submit_open false, no next
   // lock, lock text "All picks locked"/"Final"), and #status-card gets data-submit="closed" + data-picks="locked" after
   // the listeners run. live.js only ever closes, never reopens, so the more-closed value always wins.
+  // data-submit=closed + data-picks=locked is also what shows build_site's locked banner (.lockbanner) in place of the button.
   function closeIso(st) {
     var card = document.getElementById("status-card");
     return (st && st.submit_close_iso) || (card && card.getAttribute("data-submit-close")) || null;

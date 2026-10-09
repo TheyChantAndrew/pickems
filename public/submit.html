@@ -3,13 +3,13 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%83%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <title>Week 5 Picks · Fam Bash Pickems</title><meta name="theme-color" content="#1a0b08">
-<meta name="description" content="Make your Week 5 Fam Bash Pickems picks. Pick every game + tiebreaker right here. No sign-up. Each pick locks at kickoff. $10 entry.">
+<meta name="description" content="Make your Week 5 Fam Bash Pickems picks. Pick every game + tiebreaker right here. No sign-up. All picks lock at Thursday kickoff. $10 entry.">
 <meta property="og:type" content="website"><meta property="og:site_name" content="Fam Bash Pickems">
 <meta property="og:title" content="🎃 Make your Week 5 picks · Fam Bash Pickems">
-<meta property="og:description" content="Pick every game + tiebreaker right here. No sign-up. Each pick locks at kickoff. $10 entry.">
+<meta property="og:description" content="Pick every game + tiebreaker right here. No sign-up. All picks lock at Thursday kickoff. $10 entry.">
 <meta property="og:image" content="https://fambash-pickems.vercel.app/og-image.png"><meta property="og:url" content="https://fambash-pickems.vercel.app/submit">
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Make your Week 5 picks · Fam Bash Pickems">
-<meta name="twitter:description" content="Pick every game + tiebreaker right here. No sign-up. Each pick locks at kickoff."><meta name="twitter:image" content="https://fambash-pickems.vercel.app/og-image.png">
+<meta name="twitter:description" content="Pick every game + tiebreaker right here. No sign-up. All picks lock at Thursday kickoff."><meta name="twitter:image" content="https://fambash-pickems.vercel.app/og-image.png">
 <style>
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
@@ -76,6 +76,11 @@ body.soon .team{opacity:.75}
 .topnote{border-radius:12px;padding:12px 14px;font-size:14.5px;margin:0 0 12px;line-height:1.4}
 .topnote b{font-size:16px} .topnote.partial{background:#2a1a12;border:2px solid #f59e0b;color:#fde68a} .topnote.partial b{color:#fff8ee}
 .topnote.closed{background:#7f1d1d;border:2px solid #f87171;color:#fff1f2}
+.topnote.locked{background:#1d1226;border:1px solid #5b4170;border-left:4px solid #f59e0b;color:#e7d3b0}
+.topnote.locked b{color:#fff8ee;font-size:17px;display:block;margin-bottom:3px} .topnote.locked .tbtn{background:#f6efe4;color:#1a0b08}
+fieldset.fs{border:0;margin:0;padding:0;min-width:0}
+details.off>summary{pointer-events:none;opacity:.5}
+form[data-locked] .submit,form[data-locked] .submit:disabled{background:#3b2a4a;border-color:#5b4170;color:#e7d3b0;box-shadow:none;opacity:1}
 .tbtn{display:flex;align-items:center;justify-content:center;min-height:48px;margin-top:10px;border-radius:10px;background:#fff1f2;color:#7f1d1d;font-weight:800;text-decoration:none}
 .lockedwrap{margin-top:10px;background:#1d1226;border:1px dashed #5b4170;border-radius:12px;padding:0 10px}
 .lockedwrap>summary{color:#d6c4a8} .lockedwrap[open]{padding-bottom:10px} .lockedwrap .games{margin-top:4px}
@@ -91,8 +96,8 @@ footer{font-size:12px;color:#a8957d;text-align:center;padding:18px 12px 28px}
 </style></head><body class="live">
 <header><div class="in"><div><h1>🎃 Week 5 Picks</h1>
 <div class="meta">Fam Bash Pickems 2026 · $10 entry</div></div><a class="back" href="./">← Standings</a></div></header>
-<main><div id="topnote" class="topnote" role="status" aria-live="polite" hidden></div>
-<form id="f" novalidate autocomplete="on">
+<main><div id="topnote" class="topnote locked" role="status" aria-live="polite"><b>🔒 Pickems has started — picks are locked.</b> All Week 5 picks locked at Thursday kickoff (Thu 5:15 PM PT): every game, the Monday pick and the tiebreaker. <a class="tbtn" href="./">See the board →</a></div>
+<form id="f" novalidate autocomplete="on" data-locked="1"><fieldset class="fs" id="fs" disabled>
 <div class="card" id="who"><div class="row two">
  <div><label for="name">Your name</label><input id="name" name="name" type="text" maxlength="20" autocomplete="nickname" autocapitalize="words" placeholder="e.g. Maria R" aria-describedby="name-help name-err" required>
   <div class="small hrow"><span id="name-help">This is how you'll show up on the board. Up to 20 characters.</span><span class="cnt" id="name-cnt" aria-hidden="true">0/20</span></div>
@@ -102,12 +107,12 @@ footer{font-size:12px;color:#a8957d;text-align:center;padding:18px 12px 28px}
   <span class="sr" id="tag-live" aria-live="polite" aria-atomic="true"></span><div class="ferr" id="tag-err" hidden></div></div>
 </div>
 <div class="hp" aria-hidden="true"><input id="zq7f" name="zq7f" type="text" value="" tabindex="-1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other"></div>
-<details id="editbox"><summary>Already entered? Change your picks</summary>
+<details id="editbox" class="off"><summary tabindex="-1" aria-disabled="true">Already entered? Change your picks</summary>
  <div class="small" id="code-help">Use the edit code you got when you first entered (this phone remembers it).</div>
  <div class="coderow"><input id="code" type="text" maxlength="8" placeholder="CODE" autocomplete="off" autocapitalize="characters" aria-label="Edit code" aria-describedby="code-help code-err">
  <button type="button" class="btn2" id="load">Load my picks</button></div><div class="ferr" id="code-err" hidden></div><div class="okline" id="code-ok" hidden></div></details>
 </div>
-<h2>Your picks</h2><p class="hint">Tap the team you think wins. Each game locks at kickoff. Monday's pick and the tiebreaker lock when the last Sunday game starts.</p>
+<h2>Your picks</h2><p class="hint">Tap the team you think wins. All picks lock at Thursday kickoff (Thu 5:15 PM PT): every game, Monday's pick and the tiebreaker.</p>
 <div class="games" id="games"><div class="game" data-m="TB @ DAL" data-i="1"><div class="gtop"><span><span class="when">Thu 10/8 5:15PM PT</span></span><span class="st"></span></div><div class="teams" role="group" aria-label="TB @ DAL pick" aria-describedby="gerr-1"><button type="button" class="team" data-m="TB @ DAL" data-t="Tampa Bay" aria-pressed="false" aria-label="Tampa Bay"><b>TB</b><small>Tampa Bay</small></button><span class="at">@</span><button type="button" class="team" data-m="TB @ DAL" data-t="Dallas" aria-pressed="false" aria-label="Dallas"><b>DAL</b><small>Dallas</small></button></div><div class="gerr" id="gerr-1" hidden>⚠ Pick a team for this game</div></div>
 <div class="game" data-m="PHI @ JAX" data-i="2"><div class="gtop"><span><span class="when">Sun 10/11 6:30AM PT</span></span><span class="st"></span></div><div class="teams" role="group" aria-label="PHI @ JAX pick" aria-describedby="gerr-2"><button type="button" class="team" data-m="PHI @ JAX" data-t="Philadelphia" aria-pressed="false" aria-label="Philadelphia"><b>PHI</b><small>Philadelphia</small></button><span class="at">@</span><button type="button" class="team" data-m="PHI @ JAX" data-t="Jacksonville" aria-pressed="false" aria-label="Jacksonville"><b>JAX</b><small>Jacksonville</small></button></div><div class="gerr" id="gerr-2" hidden>⚠ Pick a team for this game</div></div>
 <div class="game" data-m="HOU @ TEN" data-i="3"><div class="gtop"><span><span class="when">Sun 10/11 10:00AM PT</span></span><span class="st"></span></div><div class="teams" role="group" aria-label="HOU @ TEN pick" aria-describedby="gerr-3"><button type="button" class="team" data-m="HOU @ TEN" data-t="Houston" aria-pressed="false" aria-label="Houston"><b>HOU</b><small>Houston</small></button><span class="at">@</span><button type="button" class="team" data-m="HOU @ TEN" data-t="Tennessee" aria-pressed="false" aria-label="Tennessee"><b>TEN</b><small>Tennessee</small></button></div><div class="gerr" id="gerr-3" hidden>⚠ Pick a team for this game</div></div>
@@ -130,27 +135,31 @@ footer{font-size:12px;color:#a8957d;text-align:center;padding:18px 12px 28px}
  <span class="small" id="tbst"></span></div><div class="ferr" id="tb-err" hidden></div></div>
 <div id="msg" class="msg" role="status" aria-live="polite"></div>
 <div class="bar"><div class="prog"><b id="cnt">0</b> of <span id="tot">15</span> picked<div class="pbar"><i id="pb"></i></div></div>
-<button class="submit" id="go" type="submit">Submit picks</button></div>
-</form>
+<button class="submit" id="go" type="submit" disabled>Picks locked</button></div>
+</fieldset></form>
 <datalist id="tags"><option value="Comish"><option value="Cool Cats"><option value="Cool cats"><option value="coolcats"><option value="Fam Bash"><option value="Fam bash"><option value="FAM BASH"><option value="Give Kirk Da Ball"><option value="Marioooo"><option value="NINOS BONITOS"><option value="RAAAAIIIDERSSSSSSS"><option value="SPIT"></datalist>
 </main>
 <footer>Pay Andy $10 to make your entry count. Entries show as unpaid until he marks you paid.</footer>
-<script>window.PICKEMS={"week": 5, "year": 2026, "fee": 10, "apiBase": "", "games": [{"game_no": 1, "matchup": "TB @ DAL", "away": "TB", "home": "DAL", "away_team": "Tampa Bay", "home_team": "Dallas", "kickoff": "2026-10-08T17:15:00-07:00", "kickoff_label": "Thu 10/8 5:15PM PT", "is_monday": false, "is_tiebreaker": false, "lock_at": "2026-10-08T17:15:00-07:00"}, {"game_no": 2, "matchup": "PHI @ JAX", "away": "PHI", "home": "JAX", "away_team": "Philadelphia", "home_team": "Jacksonville", "kickoff": "2026-10-11T06:30:00-07:00", "kickoff_label": "Sun 10/11 6:30AM PT", "is_monday": false, "is_tiebreaker": false, "lock_at": "2026-10-11T06:30:00-07:00"}, {"game_no": 3, "matchup": "HOU @ TEN", "away": "HOU", "home": "TEN", "away_team": "Houston", "home_team": "Tennessee", "kickoff": "2026-10-11T10:00:00-07:00", "kickoff_label": "Sun 10/11 10:00AM PT", "is_monday": false, "is_tiebreaker": false, "lock_at": "2026-10-11T10:00:00-07:00"}, {"game_no": 4, "matchup": "CIN @ MIA", "away": "CIN", "home": "MIA", "away_team": "Cincinnati", "home_team": "Miami", "kickoff": "2026-10-11T10:00:00-07:00", "kickoff_label": "Sun 10/11 10:00AM PT", "is_monday": false, "is_tiebreaker": false, "lock_at": "2026-10-11T10:00:00-07:00"}, {"game_no": 5, "matchup": "LV @ NE", "away": "LV", "home": "NE", "away_team": "Las Vegas", "home_team": "New England", "kickoff": "2026-10-11T10:00:00-07:00", "kickoff_label": "Sun 10/11 10:00AM PT", "is_monday": false, "is_tiebreaker": false, "lock_at": "2026-10-11T10:00:00-07:00"}, {"game_no": 6, "matchup": "MIN @ NO", "away": "MIN", "home": "NO", "away_team": "Minnesota", "home_team": "New Orleans", "kickoff": "2026-10-11T10:00:00-07:00", "kickoff_label": "Sun 10/11 10:00AM PT", "is_monday": false, "is_tiebreaker": false, "lock_at": "2026-10-11T10:00:00-07:00"}, {"game_no": 7, "matchup": "CLE @ NYJ", "away": "CLE", "home": "NYJ", "away_team": "Cleveland", "home_team": "NY Jets", "kickoff": "2026-10-11T10:00:00-07:00", "kickoff_label": "Sun 10/11 10:00AM PT", "is_monday": false, "is_tiebreaker": false, "lock_at": "2026-10-11T10:00:00-07:00"}, {"game_no": 8, "matchup": "IND @ PIT", "away": "IND", "home": "PIT", "away_team": "Indianapolis", "home_team": "Pittsburgh", "kickoff": "2026-10-11T10:00:00-07:00", "kickoff_label": "Sun 10/11 10:00AM PT", "is_monday": false, "is_tiebreaker": false, "lock_at": "2026-10-11T10:00:00-07:00"}, {"game_no": 9, "matchup": "NYG @ WAS", "away": "NYG", "home": "WAS", "away_team": "NY Giants", "home_team": "Washington", "kickoff": "2026-10-11T10:00:00-07:00", "kickoff_label": "Sun 10/11 10:00AM PT", "is_monday": false, "is_tiebreaker": false, "lock_at": "2026-10-11T10:00:00-07:00"}, {"game_no": 10, "matchup": "DEN @ LAC", "away": "DEN", "home": "LAC", "away_team": "Denver", "home_team": "LA Chargers", "kickoff": "2026-10-11T13:05:00-07:00", "kickoff_label": "Sun 10/11 1:05PM PT", "is_monday": false, "is_tiebreaker": false, "lock_at": "2026-10-11T13:05:00-07:00"}, {"game_no": 11, "matchup": "CHI @ GB", "away": "CHI", "home": "GB", "away_team": "Chicago", "home_team": "Green Bay", "kickoff": "2026-10-11T10:00:00-07:00", "kickoff_label": "Sun 10/11 10:00AM PT", "is_monday": false, "is_tiebreaker": false, "lock_at": "2026-10-11T10:00:00-07:00"}, {"game_no": 12, "matchup": "DET @ ARI", "away": "DET", "home": "ARI", "away_team": "Detroit", "home_team": "Arizona", "kickoff": "2026-10-11T13:25:00-07:00", "kickoff_label": "Sun 10/11 1:25PM PT", "is_monday": false, "is_tiebreaker": false, "lock_at": "2026-10-11T13:25:00-07:00"}, {"game_no": 13, "matchup": "SF @ SEA", "away": "SF", "home": "SEA", "away_team": "San Francisco", "home_team": "Seattle", "kickoff": "2026-10-11T13:25:00-07:00", "kickoff_label": "Sun 10/11 1:25PM PT", "is_monday": false, "is_tiebreaker": false, "lock_at": "2026-10-11T13:25:00-07:00"}, {"game_no": 14, "matchup": "BAL @ ATL", "away": "BAL", "home": "ATL", "away_team": "Baltimore", "home_team": "Atlanta", "kickoff": "2026-10-11T17:20:00-07:00", "kickoff_label": "Sun 10/11 5:20PM PT", "is_monday": false, "is_tiebreaker": false, "lock_at": "2026-10-11T17:20:00-07:00"}, {"game_no": 15, "matchup": "BUF @ LAR", "away": "BUF", "home": "LAR", "away_team": "Buffalo", "home_team": "LA Rams", "kickoff": "2026-10-12T17:15:00-07:00", "kickoff_label": "Mon 10/12 5:15PM PT", "is_monday": true, "is_tiebreaker": true, "lock_at": "2026-10-11T17:20:00-07:00"}], "max": {"name": 20, "tag": 18}, "tiebreaker": {"matchup": "BUF @ LAR", "lock_at": "2026-10-11T17:20:00-07:00", "label": "Mon 10/12 5:15PM PT"}};</script>
+<script>window.PICKEMS={"week": 5, "year": 2026, "fee": 10, "apiBase": "", "games": [{"game_no": 1, "matchup": "TB @ DAL", "away": "TB", "home": "DAL", "away_team": "Tampa Bay", "home_team": "Dallas", "kickoff": "2026-10-08T17:15:00-07:00", "kickoff_label": "Thu 10/8 5:15PM PT", "is_monday": false, "is_tiebreaker": false, "lock_at": "2026-10-08T17:15:00-07:00"}, {"game_no": 2, "matchup": "PHI @ JAX", "away": "PHI", "home": "JAX", "away_team": "Philadelphia", "home_team": "Jacksonville", "kickoff": "2026-10-11T06:30:00-07:00", "kickoff_label": "Sun 10/11 6:30AM PT", "is_monday": false, "is_tiebreaker": false, "lock_at": "2026-10-08T17:15:00-07:00"}, {"game_no": 3, "matchup": "HOU @ TEN", "away": "HOU", "home": "TEN", "away_team": "Houston", "home_team": "Tennessee", "kickoff": "2026-10-11T10:00:00-07:00", "kickoff_label": "Sun 10/11 10:00AM PT", "is_monday": false, "is_tiebreaker": false, "lock_at": "2026-10-08T17:15:00-07:00"}, {"game_no": 4, "matchup": "CIN @ MIA", "away": "CIN", "home": "MIA", "away_team": "Cincinnati", "home_team": "Miami", "kickoff": "2026-10-11T10:00:00-07:00", "kickoff_label": "Sun 10/11 10:00AM PT", "is_monday": false, "is_tiebreaker": false, "lock_at": "2026-10-08T17:15:00-07:00"}, {"game_no": 5, "matchup": "LV @ NE", "away": "LV", "home": "NE", "away_team": "Las Vegas", "home_team": "New England", "kickoff": "2026-10-11T10:00:00-07:00", "kickoff_label": "Sun 10/11 10:00AM PT", "is_monday": false, "is_tiebreaker": false, "lock_at": "2026-10-08T17:15:00-07:00"}, {"game_no": 6, "matchup": "MIN @ NO", "away": "MIN", "home": "NO", "away_team": "Minnesota", "home_team": "New Orleans", "kickoff": "2026-10-11T10:00:00-07:00", "kickoff_label": "Sun 10/11 10:00AM PT", "is_monday": false, "is_tiebreaker": false, "lock_at": "2026-10-08T17:15:00-07:00"}, {"game_no": 7, "matchup": "CLE @ NYJ", "away": "CLE", "home": "NYJ", "away_team": "Cleveland", "home_team": "NY Jets", "kickoff": "2026-10-11T10:00:00-07:00", "kickoff_label": "Sun 10/11 10:00AM PT", "is_monday": false, "is_tiebreaker": false, "lock_at": "2026-10-08T17:15:00-07:00"}, {"game_no": 8, "matchup": "IND @ PIT", "away": "IND", "home": "PIT", "away_team": "Indianapolis", "home_team": "Pittsburgh", "kickoff": "2026-10-11T10:00:00-07:00", "kickoff_label": "Sun 10/11 10:00AM PT", "is_monday": false, "is_tiebreaker": false, "lock_at": "2026-10-08T17:15:00-07:00"}, {"game_no": 9, "matchup": "NYG @ WAS", "away": "NYG", "home": "WAS", "away_team": "NY Giants", "home_team": "Washington", "kickoff": "2026-10-11T10:00:00-07:00", "kickoff_label": "Sun 10/11 10:00AM PT", "is_monday": false, "is_tiebreaker": false, "lock_at": "2026-10-08T17:15:00-07:00"}, {"game_no": 10, "matchup": "DEN @ LAC", "away": "DEN", "home": "LAC", "away_team": "Denver", "home_team": "LA Chargers", "kickoff": "2026-10-11T13:05:00-07:00", "kickoff_label": "Sun 10/11 1:05PM PT", "is_monday": false, "is_tiebreaker": false, "lock_at": "2026-10-08T17:15:00-07:00"}, {"game_no": 11, "matchup": "CHI @ GB", "away": "CHI", "home": "GB", "away_team": "Chicago", "home_team": "Green Bay", "kickoff": "2026-10-11T10:00:00-07:00", "kickoff_label": "Sun 10/11 10:00AM PT", "is_monday": false, "is_tiebreaker": false, "lock_at": "2026-10-08T17:15:00-07:00"}, {"game_no": 12, "matchup": "DET @ ARI", "away": "DET", "home": "ARI", "away_team": "Detroit", "home_team": "Arizona", "kickoff": "2026-10-11T13:25:00-07:00", "kickoff_label": "Sun 10/11 1:25PM PT", "is_monday": false, "is_tiebreaker": false, "lock_at": "2026-10-08T17:15:00-07:00"}, {"game_no": 13, "matchup": "SF @ SEA", "away": "SF", "home": "SEA", "away_team": "San Francisco", "home_team": "Seattle", "kickoff": "2026-10-11T13:25:00-07:00", "kickoff_label": "Sun 10/11 1:25PM PT", "is_monday": false, "is_tiebreaker": false, "lock_at": "2026-10-08T17:15:00-07:00"}, {"game_no": 14, "matchup": "BAL @ ATL", "away": "BAL", "home": "ATL", "away_team": "Baltimore", "home_team": "Atlanta", "kickoff": "2026-10-11T17:20:00-07:00", "kickoff_label": "Sun 10/11 5:20PM PT", "is_monday": false, "is_tiebreaker": false, "lock_at": "2026-10-08T17:15:00-07:00"}, {"game_no": 15, "matchup": "BUF @ LAR", "away": "BUF", "home": "LAR", "away_team": "Buffalo", "home_team": "LA Rams", "kickoff": "2026-10-12T17:15:00-07:00", "kickoff_label": "Mon 10/12 5:15PM PT", "is_monday": true, "is_tiebreaker": true, "lock_at": "2026-10-08T17:15:00-07:00"}], "max": {"name": 20, "tag": 18}, "lock_at": "2026-10-08T17:15:00-07:00", "lock_day": "Thursday", "lock_label": "Thu 5:15 PM PT", "tiebreaker": {"matchup": "BUF @ LAR", "lock_at": "2026-10-08T17:15:00-07:00", "label": "Mon 10/12 5:15PM PT"}};</script>
 <script>
 (function(){
 const D=window.PICKEMS, W=D.week, LS='fbp_w'+W;
 const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
 const byM={}; D.games.forEach(g=>byM[g.matchup]=g);
-let tbLock=D.tiebreaker.lock_at, serverOpen=true, skew=0;   // skew = server clock - device clock
+let tbLock=D.lock_at, serverOpen=true, srvLocked=false, skew=0;   // skew = server clock - device clock
 const now=()=>Date.now()+skew;
 const pt=new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',weekday:'short',hour:'numeric',minute:'2-digit'});
 function until(ms){const m=Math.round(ms/60000); if(m<60) return m+'m'; const h=Math.floor(m/60); if(h<48) return h+'h '+(m%60)+'m'; return Math.floor(h/24)+'d '+(h%24)+'h';}
-const isLocked=g=>now()>=Date.parse(g.lock_at)||g.locked_srv;
-const tbLocked=()=>now()>=Date.parse(tbLock);
+// ONE lock for everything: the first kickoff (D.lock_at). srvLocked = /api/games said locked, or a submit got CLOSED.
+const weekLocked=()=>srvLocked||now()>=Date.parse(D.lock_at);
+const isLocked=g=>weekLocked()||now()>=Date.parse(g.lock_at)||g.locked_srv;
+const tbLocked=()=>weekLocked()||now()>=Date.parse(tbLock);
+const LOCKED_NOTE='<b>🔒 Pickems has started — picks are locked.</b> All Week '+W+' picks locked at '+D.lock_day+' kickoff ('+D.lock_label+'): every game, the Monday pick and the tiebreaker. <a class="tbtn" href="./">See the board →</a>';
 let state={}; try{state=JSON.parse(localStorage.getItem(LS)||'{}')}catch(_e){}
 state.picks=state.picks||{};
 const save=()=>{try{localStorage.setItem(LS,JSON.stringify(state))}catch(_e){}};
 const form=$('#f');
+if(form&&form.dataset.locked==='1') srvLocked=true;            // built after the lock: closed for good, whatever this device's clock says
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cardOf=m=>$$('.game').find(el=>el.dataset.m===m);
 // ---- inline errors: message under the field / card, aria-invalid + aria-describedby, first one focused ----
@@ -179,7 +188,7 @@ function focusFirst(){
   return true;
 }
 function msg(kind,html){summary(html,kind); $('#msg').scrollIntoView({behavior:'smooth',block:'center'});}
-function topnote(kind,html){const n=$('#topnote'); if(!n) return; if(!html){n.hidden=true; n.innerHTML=''; return;} if(n.dataset.k!==kind+html){n.className='topnote '+kind; n.innerHTML=html; n.dataset.k=kind+html;} n.hidden=false;}
+function topnote(kind,html){const n=$('#topnote'); if(!n) return; if(!html){n.hidden=true; n.innerHTML=''; n.dataset.k=''; return;} if(n.dataset.k!==kind+html){n.className='topnote '+kind; n.innerHTML=html; n.dataset.k=kind+html;} n.hidden=false;}
 let groupSig='';
 function paint(){
   let n=0, open=0, locked=0, next=null;
@@ -190,7 +199,7 @@ function paint(){
     const st=el.querySelector('.st'), t=Date.parse(g.lock_at)-now();
     if(!form) st.textContent='';
     else if(lk) st.textContent='🔒 Locked'+(pick?' · your pick stays':'');
-    else st.textContent=(g.is_monday&&g.lock_at!==g.kickoff?'Locks Sun ':'Locks in ')+(g.is_monday&&g.lock_at!==g.kickoff?pt.format(new Date(g.lock_at)).replace(/^\w+ /,''):until(t));
+    else st.textContent='Locks in '+until(t);
     el.classList.toggle('done',!!pick&&!lk);
     if(pick) n++;
     if(!lk){ open++; const tl=Date.parse(g.lock_at); if(next===null||tl<next) next=tl; } else if(form) locked++;
@@ -198,6 +207,25 @@ function paint(){
   if(!form) return;
   // already-started games collapse into one row at the bottom so latecomers land on the open ones
   const G=$('#games'), LG=$('#lockedgames'), LW=$('#lockedwrap'), all=$$('.game').sort((a,b)=>a.dataset.i-b.dataset.i);
+  const wl=weekLocked();
+  if(wl){
+    // closed: the whole week locked at the first kickoff. Games stay in place (read-only), form + lookup disabled.
+    if(groupSig!=='wl'){ groupSig='wl'; all.forEach(el=>G.appendChild(el)); }
+    LW.hidden=true; G.hidden=false;
+    $('#fs').disabled=true; form.setAttribute('data-locked','1');
+    const eb=$('#editbox'); eb.open=false; eb.classList.add('off'); const su=eb.querySelector('summary'); su.setAttribute('tabindex','-1'); su.setAttribute('aria-disabled','true');
+    $('#tb').disabled=true; $('#tbst').textContent='🔒 Locked';
+    $('#cnt').textContent=n; $('#pb').style.width=(100*n/D.games.length)+'%';
+    $('#go').disabled=true; $('#go').textContent='Picks locked'; $('#who').classList.add('off');
+    topnote('locked',LOCKED_NOTE);
+    return;
+  }
+  // not locked (e.g. this device's clock ran ahead until /api/games corrected it): undo a closed paint
+  if(form.getAttribute('data-locked')){
+    form.removeAttribute('data-locked'); $('#fs').disabled=false;
+    const eb=$('#editbox'); eb.classList.remove('off'); const su=eb.querySelector('summary'); su.removeAttribute('tabindex'); su.removeAttribute('aria-disabled');
+    $('#go').disabled=false; $('#go').textContent=state.code?'Update picks':'Submit picks'; $('#who').classList.remove('off'); topnote('','');
+  }
   const sig=all.map(el=>el.classList.contains('locked')?1:0).join('');
   if(sig!==groupSig){ groupSig=sig; all.forEach(el=>(el.classList.contains('locked')?LG:G).appendChild(el)); }
   LW.hidden=!locked; G.hidden=!open;
@@ -246,6 +274,7 @@ if(form){
     return r.json();
   }
   $('#load').addEventListener('click',async()=>{
+    if(weekLocked()){ paint(); return; }
     const name=$('#name').value.trim(), code=$('#code').value.trim();
     setErr('name',''); setErr('code','');
     if(!name||!code){ if(!name) setErr('name','Enter the name you entered with.'); if(!code) setErr('code','Enter your edit code.'); focusFirst(); return; }
@@ -258,6 +287,7 @@ if(form){
   });
   form.addEventListener('submit',async ev=>{
     ev.preventDefault(); paint(); clearErrs();
+    if(weekLocked()){ window.scrollTo({top:0,behavior:'smooth'}); return; }
     const name=$('#name').value.trim(), tag=$('#tag').value.trim().replace(/[()]/g,''), code=$('#code').value.trim();
     const picks={}, missing=[];
     D.games.forEach(g=>{ if(isLocked(g)) return; const p=state.picks[g.matchup]; if(p) picks[g.matchup]=p; else missing.push(g.matchup); });
@@ -286,7 +316,8 @@ if(form){
         else if(c==='TB') setErr('tb',t);
         else if(c==='NEED_CODE'){ $('#editbox').open=true; setErr('code',t); }
         else if(c==='MISSING') (t.split('Missing: ')[1]||'').split(', ').forEach(m=>setGameErr(cardOf(m.trim()),true));
-        else if(c==='CLOSED'||c==='WEEK'){ serverOpen=false; }
+        else if(c==='CLOSED'){ srvLocked=true; }
+        else if(c==='WEEK'){ serverOpen=false; }
         summary(esc(t));
         if(c==='CLOSED'||c==='WEEK'){ paint(); window.scrollTo({top:0,behavior:'smooth'}); }
         else if(!focusFirst()) $('#msg').scrollIntoView({behavior:'smooth',block:'center'});
@@ -301,10 +332,14 @@ if(form){
     (s.games||[]).forEach(g=>{ if(byM[g.matchup]){ byM[g.matchup].lock_at=g.lock_at; byM[g.matchup].locked_srv=!!g.locked; } });
     if(s.tiebreaker_lock_at) tbLock=s.tiebreaker_lock_at;
     if(s.tiebreaker_locked) tbLock=new Date(0).toISOString();
-    serverOpen=!!s.open;
+    serverOpen=!!s.open; if(s.locked===true) srvLocked=true;
+    if(s.lock_at){ D.lock_at=s.lock_at; tbLock=s.lock_at; schedule(); }
     paint();
   }).catch(()=>{});
 }
-paint(); setInterval(paint,20000);
+// flip to closed exactly at the lock (plus the 20 s repaint as a backstop)
+let lockTimer=null;
+function schedule(){ if(lockTimer) clearTimeout(lockTimer); const ms=Date.parse(D.lock_at)-now(); if(ms>0&&ms<2147483647) lockTimer=setTimeout(paint,ms+250); }
+schedule(); paint(); setInterval(paint,20000);
 })();
 </script></body></html>

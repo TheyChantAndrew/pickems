@@ -10,7 +10,7 @@
    Paid (Turso is the source of truth for web entries, toggled in /admin): when /api/entries says paid_live, each poll and
    page load applies every entry's paid to the board players it belongs to (synced web rows matched on player.entry/key,
    merged rows directly; paper players never), recomputes status.payout + text.payout, then paints the paid badges (.pdc),
-   #unpaid-n and #owes with exactly the markup build_site's pickems:board listener writes, before dispatching the event. The
+   #unpaid-n, #owes and the tr.unpaid red-pulse class with exactly the markup build_site's pickems:board listener writes, before dispatching the event. The
    listener reads the same updated players, so both write identical text and never fight. No paid_live = board JSON wins.
    Deletes: /api/entries lists "tombstones" (names deleted in /admin with no live entry). On each successful poll, board
    players that are web entries (online, matched on player.entry) with a tombstoned name and no live entry are dropped from
@@ -170,10 +170,16 @@
     s.text = s.text || {}; s.text.payout = "$" + s.payout;
     return out;
   }
-  /** Paid badges / unpaid count / Still-owes line from b.players: same markup + text as build_site's listener. */
+  /** Paid badges / unpaid count / Still-owes line from b.players: same markup + text as build_site's listener.
+      Also the red unpaid pulse: every tr[data-player] (Standings and Picks rows) carries class "unpaid" exactly when its
+      player is unpaid (build_site renders it; this keeps it current, so marking someone paid in /admin drops the glow on
+      the next 60 s poll without a reload). classList.toggle(…, force) is a no-op when already right. */
   function paintPaid(b) {
     var ps = b.players || [], byKey = {}, fee0 = Number(b.fee != null ? b.fee : 10);
     ps.forEach(function (p) { byKey[p.key] = p; });
+    all("tr[data-player]").forEach(function (tr) {
+      var p = byKey[tr.getAttribute("data-player")]; if (p) tr.classList.toggle("unpaid", !p.paid);
+    });
     all("tr[data-player] .pdc").forEach(function (pd) {
       var p = byKey[pd.closest("tr").getAttribute("data-player")]; if (!p) return;
       var cls = p.paid ? "paid" : "owe", txt = p.paid ? "\u2713 paid" : "owes $" + (pd.getAttribute("data-fee") || fee0);
@@ -215,7 +221,7 @@
 
   // ---- merged web rows: cloned from an existing row of the same table, text only (never innerHTML) ----
   function fillRow(tr, p, fee) {
-    tr.setAttribute("data-web", "1"); tr.classList.remove("lead"); tr.removeAttribute("data-tomb"); tr.hidden = false;
+    tr.setAttribute("data-web", "1"); tr.classList.remove("lead"); tr.classList.toggle("unpaid", !p.paid); tr.removeAttribute("data-tomb"); tr.hidden = false;
     [tr].concat(all("[data-player]", tr)).forEach(function (el) { el.setAttribute("data-player", p.key); });
     var who = tr.querySelector("td.who");
     if (who) {

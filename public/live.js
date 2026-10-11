@@ -12,6 +12,11 @@
    merged rows directly; paper players never), recomputes status.payout + text.payout, then paints the paid badges (.pdc),
    #unpaid-n, #owes and the tr.unpaid red-pulse class with exactly the markup build_site's pickems:board listener writes, before dispatching the event. The
    listener reads the same updated players, so both write identical text and never fight. No paid_live = board JSON wins.
+   Void (Turso is the source of truth, toggled in /admin): each /api/entries row carries void (boolean). applyVoid() copies it
+   onto the board's web players (same matching as paid; paper players keep the board JSON's flag) and recomputes leaders:
+   a voided player stays on the board with its picks, score and rank but is never a leader (if everyone tied for first is
+   void, the next best non-void player leads), same rule as pickems_status. paintPaid() then toggles tr.void (the VOID stamp)
+   and drops tr.unpaid on voided rows, so the stamp replaces the red unpaid pulse; it shows / clears within one poll.
    Deletes: /api/entries lists "tombstones" (names deleted in /admin with no live entry). On each successful poll, board
    players that are web entries (online, matched on player.entry) with a tombstoned name and no live entry are dropped from
    the board handed to the hooks and listeners (ranks, leaders, entries, pot, payout, splits recomputed) and their rows get
@@ -77,7 +82,7 @@
       var tb = revealed && en.tiebreaker != null && en.tiebreaker !== "" ? Number(en.tiebreaker) : null;
       picks.tb = revealed ? {cls: "pick-tb", text: tb != null && isFinite(tb) ? String(Math.trunc(tb)) : "\u2014"} : LOCK;
       var tag = stripTag(en.tag), p = {key: k, name: String(en.name), tag: tag, display: tag ? en.name + " (" + tag + ")" : String(en.name),
-               rank: 0, score: score, leader: false, paid: !!(paidLive && en.paid === true), picks: picks, web: true};
+               rank: 0, score: score, leader: false, paid: !!(paidLive && en.paid === true), void: en.void === true, picks: picks, web: true};
       if (revealed) { p.tiebreaker = tb != null && isFinite(tb) ? Math.trunc(tb) : null;
         if (p.tiebreaker != null && b.mnf_total != null) p.tiebreaker_off = Math.abs(p.tiebreaker - Number(b.mnf_total)); }
       added.push(p);
@@ -104,13 +109,15 @@
     ps = ps.map(function (p, i) { return {p: p, i: i}; }).sort(function (x, y) {
       return (y.p.score - x.p.score) || ((off(x.p) == null ? 999 : off(x.p)) - (off(y.p) == null ? 999 : off(y.p))) || (x.i - y.i);
     }).map(function (x) { return x.p; });
-    var rank = 0, prev = null, lead = ps.length ? ps[0].score : 0;
-    ps.forEach(function (p, i) { var kk = p.score + "|" + off(p); if (kk !== prev) { rank = i + 1; prev = kk; } p.rank = rank; p.leader = p.score === lead && lead > 0; });
+    // voided players keep their place, score and rank but never lead (pickems_status: eligible / best)
+    var elig = ps.filter(function (p) { return !p.void; });
+    var rank = 0, prev = null, lead = elig.length ? elig[0].score : 0;
+    ps.forEach(function (p, i) { var kk = p.score + "|" + off(p); if (kk !== prev) { rank = i + 1; prev = kk; } p.rank = rank; p.leader = !p.void && p.score === lead && lead > 0; });
     out.players = ps;
     var s = out.status, fee = Number(out.fee != null ? out.fee : 10), n = ps.length;
     s.entries = n; s.pot = n * fee;
     var leaders = [];
-    if (s.games_final > 0 && ps.length) { var top = ps[0].score + "|" + off(ps[0]); leaders = ps.filter(function (p) { return p.score + "|" + off(p) === top; }); }
+    if (s.games_final > 0 && elig.length) { var top = elig[0].score + "|" + off(elig[0]); leaders = elig.filter(function (p) { return p.score + "|" + off(p) === top; }); }
     s.leaders = leaders.map(function (p) { return {key: p.key, name: p.name, display: p.display, score: p.score}; });
     s.leaders_count = leaders.length;
     s.text = s.text || {};
@@ -170,6 +177,32 @@
     s.text = s.text || {}; s.text.payout = "$" + s.payout;
     return out;
   }
+  /** board + public entries -> board whose synced web players carry the DB void flag; when any flag changed, leaders etc.
+   *  are recomputed (restat). Pure; exported for tests. Rows without a boolean void (older server) and paper players
+   *  (online false) are never touched. Merged rows (p.web) got theirs in merge(). */
+  function applyVoid(b, entries) {
+    if (!b || !b.players || !b.status || !entries) return b;
+    var byName = {}, byKey = {}, any = false;
+    entries.forEach(function (en) {
+      if (!en || !en.name || typeof en.void !== "boolean") return;
+      byName[nameKey(en.name)] = en; byKey[playerKey(en.name, en.tag)] = en; any = true;
+    });
+    if (!any) return b;
+    var changed = false;
+    b.players.forEach(function (p) {
+      if (p.web || p.online === false) return;
+      var en = p.entry != null ? byName[nameKey(p.entry)] : (byKey[p.key] || byName[nameKey(p.name)]);
+      if (en && !!p.void !== en.void) changed = true;
+    });
+    if (!changed) return b;
+    var out = JSON.parse(JSON.stringify(b));
+    out.players.forEach(function (p) {
+      if (p.web || p.online === false) return;
+      var en = p.entry != null ? byName[nameKey(p.entry)] : (byKey[p.key] || byName[nameKey(p.name)]);
+      if (en) p.void = en.void;
+    });
+    return restat(out, out.players);
+  }
   /** Paid badges / unpaid count / Still-owes line from b.players: same markup + text as build_site's listener.
       Also the red unpaid pulse: every tr[data-player] (Standings and Picks rows) carries class "unpaid" exactly when its
       player is unpaid (build_site renders it; this keeps it current, so marking someone paid in /admin drops the glow on
@@ -177,8 +210,9 @@
   function paintPaid(b) {
     var ps = b.players || [], byKey = {}, fee0 = Number(b.fee != null ? b.fee : 10);
     ps.forEach(function (p) { byKey[p.key] = p; });
-    all("tr[data-player]").forEach(function (tr) {
-      var p = byKey[tr.getAttribute("data-player")]; if (p) tr.classList.toggle("unpaid", !p.paid);
+    all("tr[data-player]").forEach(function (tr) {   // VOID stamp replaces the unpaid pulse: never both classes
+      var p = byKey[tr.getAttribute("data-player")]; if (!p) return;
+      tr.classList.toggle("void", !!p.void); tr.classList.toggle("unpaid", !p.paid && !p.void);
     });
     all("tr[data-player] .pdc").forEach(function (pd) {
       var p = byKey[pd.closest("tr").getAttribute("data-player")]; if (!p) return;
@@ -221,7 +255,7 @@
 
   // ---- merged web rows: cloned from an existing row of the same table, text only (never innerHTML) ----
   function fillRow(tr, p, fee) {
-    tr.setAttribute("data-web", "1"); tr.classList.remove("lead"); tr.classList.toggle("unpaid", !p.paid); tr.removeAttribute("data-tomb"); tr.hidden = false;
+    tr.setAttribute("data-web", "1"); tr.classList.remove("lead"); tr.classList.toggle("void", !!p.void); tr.classList.toggle("unpaid", !p.paid && !p.void); tr.removeAttribute("data-tomb"); tr.hidden = false;
     [tr].concat(all("[data-player]", tr)).forEach(function (el) { el.setAttribute("data-player", p.key); });
     var who = tr.querySelector("td.who");
     if (who) {
@@ -308,7 +342,7 @@
     var gone = tombKeys(real, entries, tombs);
     if (needsReload(real, gone)) return;
     hideTombRows(real, gone);
-    var b = applyPaid(merge(dropTombstoned(real, entries, tombs), entries, paidLive), entries, paidLive);
+    var b = applyVoid(applyPaid(merge(dropTombstoned(real, entries, tombs), entries, paidLive), entries, paidLive), entries);
     var closed = pastClose(b.status);
     if (closed) b = closedBoard(b);
     syncWebRows(real, b);
@@ -369,5 +403,5 @@
   });
   scheduleClose(null);                                               // from the page's data-submit-close, before any fetch
   if (document.visibilityState !== "hidden") { refresh(); start(); }
-  window.PickemsLive = {refresh: refresh, apply: apply, merge: merge, applyPaid: applyPaid, dropTombstoned: dropTombstoned, playerKey: playerKey};
+  window.PickemsLive = {refresh: refresh, apply: apply, merge: merge, applyPaid: applyPaid, applyVoid: applyVoid, dropTombstoned: dropTombstoned, playerKey: playerKey};
 })();

@@ -131,6 +131,25 @@ tr.lead td{background:#3b2416}
 @keyframes unpaid-pulse-who{0%,100%{box-shadow:2px 0 0 #3d2a4a,inset 0 0 0 1px rgba(248,113,113,.25),inset 0 0 10px rgba(239,68,68,0)}
  50%{box-shadow:2px 0 0 #3d2a4a,inset 0 0 0 1px rgba(248,113,113,.65),inset 0 0 12px rgba(239,68,68,.45)}}
 @media (prefers-reduced-motion:reduce){#standings tr.unpaid td,#standings tr.unpaid td:first-child,#standings tr.unpaid td:last-child,.picks tr.unpaid td.who{animation:none}}   /* static: the base box-shadows above */
+/* VOID stamp (tr.void: build_site renders it from the week JSON's void{}, live.js + the listener toggle it from /api/entries).
+   A slanted, glowing red "VOID" over the row's name cell, in Standings and in the Picks grid's pinned name column. It is a
+   ::after on td.who: absolutely positioned inside the cell (Standings td.who gets position:relative; the pinned Picks cell is
+   already sticky, which also anchors it), so no layout shift, the name ellipsis stays, and nothing can be clipped by the
+   grid's scroller (it never leaves the cell). Replaces the unpaid pulse (tr.void never also has .unpaid; the CSS guards it
+   too). Glow pulses with the same 2 s ease-in-out as the unpaid pulse; reduced motion = static glow. */
+#standings tr.void td.who{position:relative}
+tr.void td.who::after{content:"VOID";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-9deg);pointer-events:none;
+ font:900 15px/1 -apple-system,system-ui,Segoe UI,Roboto,sans-serif;letter-spacing:.16em;padding:3px 6px 3px 8px;border:2px solid #f87171;border-radius:5px;
+ color:#fecaca;background:rgba(127,29,29,.62);text-shadow:0 0 6px rgba(239,68,68,.75);
+ box-shadow:0 0 8px rgba(239,68,68,.45),inset 0 0 6px rgba(239,68,68,.35);animation:void-pulse 2s ease-in-out infinite;z-index:1}
+.picks tr.void td.who::after{font-size:13px;letter-spacing:.14em;padding:2px 5px 2px 7px}
+#standings tr.void td.who::after{left:auto;right:10px;transform:translateY(-50%) rotate(-9deg)}   /* Standings: right side of the wide name cell, mid-row; the name's start stays readable */
+@keyframes void-pulse{0%,100%{box-shadow:0 0 4px rgba(239,68,68,.3),inset 0 0 4px rgba(239,68,68,.25);text-shadow:0 0 3px rgba(239,68,68,.5)}
+ 50%{box-shadow:0 0 12px rgba(239,68,68,.7),inset 0 0 8px rgba(239,68,68,.45);text-shadow:0 0 9px rgba(239,68,68,.95)}}
+#standings tr.void td.who{color:#a99bb8} tr.void td.who .nm,tr.void td.who .tag,#standings tr.void .sc,#standings tr.void .rk{opacity:.55}   /* the entry recedes under the stamp (Standings' name is a bare text node, so color, not opacity, which would fade the stamp too) */
+#standings tr.void.unpaid td,.picks tr.void.unpaid td.who{animation:none}   /* guard: never the unpaid pulse under a stamp */
+#standings tr.void.unpaid td{box-shadow:none} .picks tr.void.unpaid td.who{box-shadow:2px 0 0 #3d2a4a}
+@media (prefers-reduced-motion:reduce){tr.void td.who::after{animation:none}}   /* static: the base glow above */
 .nmrow{display:flex;justify-content:space-between;align-items:center;gap:6px;max-width:140px} .nmw{flex:1 1 auto;min-width:0;overflow:hidden} .scb{flex:none}   /* max-width caps the pinned column */
 .scb{flex:none;background:#f59e0b;color:#1a0b08;font-weight:800;border-radius:8px;min-width:26px;text-align:center;padding:2px 6px;font-size:14px;font-variant-numeric:tabular-nums}
 /* pick states: ✓/✗ glyphs come from CSS so live.js can swap the text without losing them */
@@ -178,7 +197,7 @@ tr.lead td.pick-win{background:#15803d} tr.lead td.pick-loss{background:#3a1420}
 <script src="/live.js" defer></script>
 </head><body>
 <header><div class="wrap"><h1>🎃 Fam Bash Pickems</h1>
-<div class="meta">Week 5 · 2026<span class="br"></span><span data-hook="updated">Updated Sun 10:32 AM PT</span></div></div></header>
+<div class="meta">Week 5 · 2026<span class="br"></span><span data-hook="updated">Updated Sun 10:33 AM PT</span></div></div></header>
 <main class="wrap">
 <section id="status-card" class="status" data-state="live" data-week="5" data-locked="true" data-submit="closed" data-picks="locked" data-submit-close="2026-10-08T17:15:00-07:00" aria-label="Week 5 status">
 <div class="eyebrow"><span class="pill" aria-hidden="true"></span><span>Week 5 · <span data-hook="games-final">2</span> of 15 final</span></div>
@@ -232,7 +251,7 @@ document.addEventListener('pickems:board',function(ev){var b=ev.detail||{},st=b.
  q('tr[data-player] td.who').forEach(function(td){var p=byk[td.getAttribute('data-player')||td.parentNode.getAttribute('data-player')];if(!p)return;var ft=p.display||p.name||'';if(td.title!==ft)td.title=ft;});
  var cnt={};ps.forEach(function(p){cnt[p.rank]=(cnt[p.rank]||0)+1;});
  q('tbody').forEach(function(tb){var rows={};q('tr[data-player]',tb).forEach(function(r){rows[r.getAttribute('data-player')]=r;});
-  ps.forEach(function(p){var r=rows[p.key];if(!r)return;tb.appendChild(r);r.classList.toggle('lead',!!p.leader);r.classList.toggle('unpaid',!p.paid);
+  ps.forEach(function(p){var r=rows[p.key];if(!r)return;tb.appendChild(r);r.classList.toggle('lead',!!p.leader);r.classList.toggle('void',!!p.void);r.classList.toggle('unpaid',!p.paid&&!p.void);
    var t=r.querySelector('.rkt');if(t)t.textContent=(cnt[p.rank]>1?'T':'')+p.rank;
    var pd=r.querySelector('.pdc');if(pd)pd.innerHTML=p.paid?'<span class="paid">✓ paid</span>':'<span class="owe">owes $'+esc(pd.getAttribute('data-fee'))+'</span>';});});
  (b.games||[]).forEach(function(g){var th=document.querySelector('th[data-game="'+g.key+'"] .sub');if(!th)return;

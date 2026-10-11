@@ -6,7 +6,11 @@
    Delete: the card's small Delete button (web entries only) opens #adm-dlg (name, tag, paid status, paid / MNF-started
           warnings; focus trapped, Esc cancels); its red Delete POSTs /api/admin/delete {week, name}. Success removes the
           card and updates the totals; any failure shows the error in the dialog and keeps the card. The server logs the
-          row (restorable) and refuses with 409 once Monday night is over (delete_state from GET /api/admin/paid). */
+          row (restorable) and refuses with 409 once Monday night is over (delete_state from GET /api/admin/paid).
+   Void:  the card's Void button (web entries only) opens #adm-vdlg to confirm; its red Void POSTs /api/admin/paid
+          {week, name, void: true}. A voided card gets .is-void + the VOID badge and its button turns into Unvoid, which
+          POSTs {void: false} straight away (one tap, no dialog). Allowed any time (no finished-week block): a voided
+          entry stays on the board under a VOID stamp but can't lead or win; pot / collected don't change. */
 (function () {
   "use strict";
   var TZ = "America/Los_Angeles";
@@ -62,6 +66,11 @@
   function paintRow(r) {
     var li = r.el, cb = li.querySelector(".adm-cb");
     li.classList.toggle("is-paid", !!r.paid);
+    li.classList.toggle("is-void", !!r.void);
+    li.querySelector(".adm-voidb").hidden = !r.void;
+    var vb = li.querySelector(".adm-void");
+    vb.textContent = r.void ? "Unvoid" : "Void"; vb.setAttribute("aria-pressed", r.void ? "true" : "false");
+    vb.setAttribute("aria-label", (r.void ? "Unvoid " : "Void ") + r.label);
     cb.checked = !!r.paid;
     li.querySelector(".adm-lbl").textContent = r.paid ? "PAID" : "OWES $" + state.fee;
     var pa = li.querySelector(".adm-paidat");
@@ -93,6 +102,29 @@
     }).then(function () { if (seq === r.seq) cb.disabled = !state.live; state.pending--; });
   }
 
+  // ---- void: POST /api/admin/paid {week, name, void}; voiding is confirmed in #adm-vdlg, unvoiding is one tap ----
+  function saveVoid(r, want) {
+    var li = r.el, vb = li.querySelector(".adm-void"), retry = li.querySelector(".adm-retry");
+    var seq = (r.vseq = (r.vseq || 0) + 1);
+    retry.hidden = true; vb.disabled = true;
+    setState(r, "is-saving", want ? "Voiding…" : "Unvoiding…"); state.pending++;
+    return api("POST", "/api/admin/paid", {week: state.week, name: r.name, void: want}).then(function (j) {
+      if (seq === r.vseq) {
+        r.void = !!j.void; paintRow(r); setState(r, "is-saved", r.void ? "Voided ✓" : "Unvoided ✓");
+        setTimeout(function () { if (seq === r.vseq && r.el.getAttribute("data-state") === "saved") setState(r, "", ""); }, 4000);
+      }
+      return j;
+    }, function (e) {
+      if (seq === r.vseq) {
+        paintRow(r);
+        setState(r, "is-error", e.status === 401 ? "Link not valid" : e.status === 429 ? "Too many tries, wait" : e.status === 404 ? "Entry not found" : "Couldn't save");
+        retry.hidden = false; retry.onclick = function () { saveVoid(r, want); };
+        if (e.status === 401 || e.status === 429) msg(e.message);
+      }
+      throw e;
+    }).then(function (j) { vb.disabled = false; state.pending--; return j; }, function (e) { vb.disabled = false; state.pending--; throw e; });
+  }
+
   function render() {
     var list = $("adm-list"), tpl = $("adm-row-tpl");
     while (list.firstChild) list.removeChild(list.firstChild);
@@ -112,6 +144,8 @@
         var del = li.querySelector(".adm-del"); del.hidden = false;
         del.setAttribute("aria-label", "Delete " + r.label);
         del.addEventListener("click", function () { openDel(r, del); });
+        var vb = li.querySelector(".adm-void"); vb.hidden = false;
+        vb.addEventListener("click", function () { if (r.void) saveVoid(r, false).catch(function () {}); else openVoid(r, vb); });
       }
       paintRow(r); setState(r, "", "");
       list.appendChild(li);
@@ -198,6 +232,55 @@
     else if (!ev.shiftKey && (i === -1 || i === f.length - 1)) { ev.preventDefault(); f[0].focus(); }
   });
 
+  // void confirm dialog (same pattern as delete: native <dialog>, focus trap, Esc cancels)
+  var vdlg = $("adm-vdlg"), vOk = $("adm-vdlg-ok"), vCancel = $("adm-vdlg-cancel"), vcur = null, vopener = null, vbusy = false;
+  function vErr(text) { var e = $("adm-vdlg-err"); e.textContent = text || ""; e.hidden = !text; }
+  function openVoid(r, btn) {
+    if (vbusy || vdlg.open || dlg.open) return;
+    vcur = r; vopener = btn;
+    $("adm-vdlg-title").textContent = "Void " + r.label + "?";
+    var tg = $("adm-vdlg-tag"); tg.textContent = r.tag || ""; tg.hidden = !r.tag;
+    var pd = $("adm-vdlg-paid"); pd.textContent = r.paid ? "PAID" : "UNPAID · owes $" + state.fee; pd.classList.toggle("is-paid", !!r.paid);
+    $("adm-vdlg-sub").textContent = (r.label !== r.name ? "Entry name: " + r.name + " · " : "") + "Submitted " + fmt(r.created_at) + " · Week " + state.week;
+    vErr(""); vOk.disabled = vCancel.disabled = false; vOk.textContent = "Void";
+    vdlg.setAttribute("data-name", r.name);
+    if (typeof vdlg.showModal === "function") vdlg.showModal(); else vdlg.setAttribute("open", "");
+    vCancel.focus();
+  }
+  function closeVoid() {
+    if (vbusy) return;
+    if (vdlg.open) { if (typeof vdlg.close === "function") vdlg.close(); else vdlg.removeAttribute("open"); }
+    vcur = null;
+    if (vopener && document.contains(vopener)) vopener.focus();
+    vopener = null;
+  }
+  function confirmVoid() {
+    if (!vcur || vbusy || vOk.disabled) return;
+    var r = vcur; vbusy = true; vOk.disabled = vCancel.disabled = true; vOk.textContent = "Voiding…"; vErr("");
+    saveVoid(r, true).then(function () {
+      vbusy = false; closeVoid(); toast("Voided " + r.label + ". The board shows the VOID stamp within a minute.");
+    }, function (e) {
+      vbusy = false; vOk.textContent = "Void"; vOk.disabled = vCancel.disabled = false;
+      vErr(e.status === 401 ? "This admin link isn't valid any more. Nothing changed."
+         : e.status === 429 ? e.message + " Nothing changed."
+         : e.status === 404 ? "That entry isn't in the database any more. Tap Refresh after closing this."
+         : "Couldn't void (" + e.message + "). Nothing changed; try again.");
+      vOk.focus();
+    });
+  }
+  vCancel.addEventListener("click", closeVoid);
+  vOk.addEventListener("click", confirmVoid);
+  vdlg.addEventListener("cancel", function (ev) { ev.preventDefault(); closeVoid(); });
+  vdlg.addEventListener("keydown", function (ev) {
+    if (ev.key === "Escape") { ev.preventDefault(); closeVoid(); return; }
+    if (ev.key !== "Tab") return;
+    var f = Array.prototype.filter.call(vdlg.querySelectorAll("button"), function (b) { return !b.disabled && !b.hidden; });
+    if (!f.length) { ev.preventDefault(); return; }
+    var i = f.indexOf(document.activeElement);
+    if (ev.shiftKey && i <= 0) { ev.preventDefault(); f[f.length - 1].focus(); }
+    else if (!ev.shiftKey && (i === -1 || i === f.length - 1)) { ev.preventDefault(); f[0].focus(); }
+  });
+
   function load(week) {
     var seq = ++state.loadSeq;
     $("adm-week").disabled = true;
@@ -215,7 +298,7 @@
         var p = byEntry[nameKey(en.name)] || byKey[playerKey(en.name, en.tag)] || byName[nameKey(en.name)];
         if (p) used[p.key] = 1;
         return {name: en.name, key: p ? p.key : playerKey(en.name, en.tag), label: p && p.name ? p.name : en.name,
-                tag: p && p.tag ? p.tag : stripTag(en.tag), created_at: en.created_at, paid: !!en.paid, paid_at: en.paid_at || null};
+                tag: p && p.tag ? p.tag : stripTag(en.tag), created_at: en.created_at, paid: !!en.paid, paid_at: en.paid_at || null, void: en.void === true};
       });
       var paperNames = {}; (j.board_names || []).forEach(function (n) { paperNames[nameKey(n)] = 1; });
       state.paper = players.filter(function (p) {
@@ -242,11 +325,11 @@
   }
 
   $("adm-week").addEventListener("change", function () { load(Number(this.value)); });
-  $("adm-refresh").addEventListener("click", function () { if (!state.pending && !dlg.open) load(state.week); });
+  $("adm-refresh").addEventListener("click", function () { if (!state.pending && !dlg.open && !vdlg.open) load(state.week); });
   document.addEventListener("visibilitychange", function () {
-    if (document.visibilityState === "visible" && state.week && !state.pending && !dlg.open) load(state.week);
+    if (document.visibilityState === "visible" && state.week && !state.pending && !dlg.open && !vdlg.open) load(state.week);
   });
   if (!token) { msg("Open the full admin link (it ends with #k=…). This page doesn't work without it."); $("adm-owes").textContent = "–"; return; }
   load(null);
-  window.PickemsAdmin = {state: state, load: load, openDel: openDel};
+  window.PickemsAdmin = {state: state, load: load, openDel: openDel, openVoid: openVoid};
 })();

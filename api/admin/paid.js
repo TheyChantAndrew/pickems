@@ -1,6 +1,8 @@
 // Admin portal (/admin) paid toggles. Authorization: Bearer <portal token> (or the box admin token).
 //   GET  /api/admin/paid?week=N            -> {entries: [{name, tag, submitted, paid, paid_at, paid_at_pt}], fee, weeks, ...}
 //   POST /api/admin/paid {week, name, paid} -> {name, paid, paid_at, paid_at_pt, changed}
+//   POST /api/admin/paid {week, name, void} -> {name, void, void_at, void_at_pt, paid, changed}   (the /admin Void toggle)
+// Void rides on this endpoint (same auth + rate limit) instead of a new function: the Vercel Hobby plan allows 12 per deploy.
 // Wrong tokens are rate-limited per IP (core.adminGate: 401, then 429). No picks, tiebreakers or edit codes here.
 const {handler} = require('../../lib/handler');
 const {send, query, jsonBody, clientIp, ipHash} = require('../../lib/http');
@@ -20,5 +22,6 @@ module.exports = handler(['GET', 'POST'], async (req, res, db, now) => {
   const b = await jsonBody(req);
   const week = Number(b.week);
   if (!data.loadWeek(week)) return send(res, 404, {ok: false, error: `Week ${b.week || '?'} is not set up yet.`, code: 'WEEK'}, H);
-  send(res, 200, await core.setPaid(db, week, b.name, b.paid, now), H);
+  if (b.void !== undefined && b.paid !== undefined) return send(res, 400, {ok: false, error: 'Send paid or void, not both.', code: 'BAD'}, H);
+  send(res, 200, b.void !== undefined ? await core.setVoid(db, week, b.name, b.void, now) : await core.setPaid(db, week, b.name, b.paid, now), H);
 }, {route: 'admin_paid'});

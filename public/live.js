@@ -27,7 +27,8 @@
    the board JSON hasn't changed: data-submit="closed", data-picks="locked", lock text "All picks locked" (see below).
    Live scores straight from ESPN (added 2026-10-12): while any (non-hidden) game is live or inside its kickoff window
    (30 min before to 6 h after) and the tab is visible, each poll also GETs the ESPN scoreboard (same URL + team-pair
-   matching + FIX abbreviations as sync_scores.py; ESPN sends Access-Control-Allow-Origin: *). espnOverlay() fills the
+   matching + FIX abbreviations as sync_scores.py), through the same-origin proxy GET /api/games?live=1&week=N&dates=YYYY
+   (browsers get no CORS header from ESPN, so not fetched directly; edge-cached 15 s). espnOverlay() fills the
    gaps where the published board is behind: live score/clock (games[].score/clock, status.live_games, state) and, when
    ESPN says final, the result (status final, winner, pick-win/pick-loss cells, scores, games_final, splits, ranks,
    leaders via restat, so void still never leads). A game the board already has final is never touched (board wins).
@@ -43,7 +44,8 @@
   var cfg = window.PICKEMS_LIVE || {};
   var URL_ = cfg.url || "/board/current.json", EVERY = cfg.interval || 60000, RELOAD_KEY = "pickems-live-reloaded";
   var ENTRIES = cfg.entries === false ? null : (cfg.entries || "/api/entries");
-  var ESPN = cfg.espn === false ? null : (cfg.espn || "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard");
+  // ESPN scoreboard via the same-origin proxy (GET /api/games?live=1: ESPN's CORS header isn't reliable in real browsers)
+  var ESPN = cfg.espn === false ? null : (cfg.espn || "/api/games?live=1");
   var lastEspn = null, ESPN_MAX_AGE = 180000;
   var timer = null, busy = false, first = null, lastEntries = null, lastPaidLive = false, lastTombs = [], lastReal = null, closeTimer = null;
   var TEXT_KEY = {"leader-short": "leader_short"};                    // data-hook name -> status.text key (else same name)
@@ -519,7 +521,7 @@
     if (!u) { lastEspn = null; return Promise.resolve(null); }            // nothing live / all final: no ESPN request
     return fetch(u, {cache: "no-store", credentials: "omit", referrerPolicy: "no-referrer"})
       .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (j) { var p = parseEspn(j, b, Date.now()); if (p) lastEspn = p; return p; })
+      .then(function (j) { var p = j && j.ok !== false ? parseEspn(j, b, Date.now()) : null; if (p) lastEspn = p; return p; })
       .catch(function () { return null; });                               // CORS / network / bad JSON: keep the board
   }
   function refresh() {

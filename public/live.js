@@ -25,14 +25,26 @@
    so neither the hide nor the sync's later publish without that player reloads the page.
    Pick lock (the first kickoff): past status.submit_close_iso (or #status-card[data-submit-close]) the page is shown closed even if
    the board JSON hasn't changed: data-submit="closed", data-picks="locked", lock text "All picks locked" (see below).
+   Live scores straight from ESPN (added 2026-10-12): while any (non-hidden) game is live or inside its kickoff window
+   (30 min before to 6 h after) and the tab is visible, each poll also GETs the ESPN scoreboard (same URL + team-pair
+   matching + FIX abbreviations as sync_scores.py; ESPN sends Access-Control-Allow-Origin: *). espnOverlay() fills the
+   gaps where the published board is behind: live score/clock (games[].score/clock, status.live_games, state) and, when
+   ESPN says final, the result (status final, winner, pick-win/pick-loss cells, scores, games_final, splits, ranks,
+   leaders via restat, so void still never leads). A game the board already has final is never touched (board wins).
+   Hidden games (Monday pick / tiebreaker before Sunday is final) are skipped entirely; sunday_final, paid, void,
+   tiebreakers and the winner banner always come from the board. mnf_total (+ tiebreaker_off) only once the board has
+   revealed tiebreakers. status.text.updated = time of the last good ESPN refresh. Every failure (CORS, network, bad
+   JSON, wrong week) is silent and falls back to the board; ESPN data older than 3 min or older than the board is dropped.
    Optional config before this script: window.PICKEMS_LIVE = {url: "/board/current.json", interval: 60000,
-   entries: "/api/entries" (false = no merge)}. Fires document "pickems:board" (detail = board incl. merged players,
+   entries: "/api/entries" (false = no merge), espn: <scoreboard url> (false = off)}. Fires document "pickems:board" (detail = board incl. merged players,
    which carry web: true). Hook names map to status.text keys; "leader-short" reads text.leader_short. */
 (function () {
   "use strict";
   var cfg = window.PICKEMS_LIVE || {};
   var URL_ = cfg.url || "/board/current.json", EVERY = cfg.interval || 60000, RELOAD_KEY = "pickems-live-reloaded";
   var ENTRIES = cfg.entries === false ? null : (cfg.entries || "/api/entries");
+  var ESPN = cfg.espn === false ? null : (cfg.espn || "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard");
+  var lastEspn = null, ESPN_MAX_AGE = 180000;
   var timer = null, busy = false, first = null, lastEntries = null, lastPaidLive = false, lastTombs = [], lastReal = null, closeTimer = null;
   var TEXT_KEY = {"leader-short": "leader_short"};                    // data-hook name -> status.text key (else same name)
   var LOCK = {cls: "pick-hidden", text: "\uD83D\uDD12"};
@@ -125,6 +137,125 @@
     s.text.leader = leaders.length ? leaders.map(function (p) { return p.name; }).join(" & ") + " \u00B7 " + leaders[0].score : "\u2014";
     s.text.leader_short = leaderShort(leaders.map(function (p) { return p.name; }));
     s.payout = fee * ps.filter(function (p) { return p.paid; }).length; s.text.payout = "$" + s.payout;
+    return out;
+  }
+
+  // ---- live scores from ESPN (same matching as sync_scores.py) ----
+  var FIX = {WSH: "WAS", LA: "LAR", JAC: "JAX", OAK: "LV", SD: "LAC"};
+  function normClock(raw) {      // pickems_status.norm_clock
+    var s = String(raw == null ? "" : raw).replace(/\s+/g, " ").trim(), low = s.toLowerCase(), m, per = null;
+    if (!s) return "LIVE";
+    if (low.indexOf("final") === 0) return low.indexOf("ot") >= 0 ? "Final/OT" : "Final";
+    if (low.indexOf("half") >= 0) return "Half";
+    var clk = /\b(\d{1,2}:\d{2})\b/.exec(s);
+    m = /\bq\s*([1-4])\b|\b([1-4])(?:st|nd|rd|th)\b/.exec(low);
+    if (m) per = "Q" + (m[1] || m[2]);
+    else { m = /\b(\d?)\s*ot\b|\bovertime\b/.exec(low); if (m) per = m[1] ? m[1] + "OT" : "OT"; }
+    if (low.indexOf("end") === 0) return ("End " + (per || (low.indexOf("regulation") >= 0 ? "Q4" : ""))).trim();
+    if (per && clk) return per + " " + clk[1];
+    return per || (clk ? clk[1] : s.slice(0, 16));
+  }
+  function espnUrl(b) {
+    if (!ESPN || !b || !b.week || !b.year) return null;
+    return ESPN + (ESPN.indexOf("?") < 0 ? "?" : "&") + "dates=" + encodeURIComponent(b.year) + "&seasontype=2&week=" + encodeURIComponent(b.week);
+  }
+  /** ESPN scoreboard JSON -> {at, games: {"BUF|LAR" (sorted pair): {sc: {BUF: 13, LAR: 7}, state: pre|in|post, done, detail}}}
+   *  or null when it isn't a usable scoreboard for this week. Pure; exported for tests. */
+  function parseEspn(j, b, at) {
+    if (!j || !Array.isArray(j.events)) return null;
+    if (j.week && j.week.number != null && b && String(j.week.number) !== String(b.week)) return null;
+    var games = {}, n = 0;
+    j.events.forEach(function (ev) {
+      try {
+        var c = ev.competitions[0], st = ev.status.type, sc = {}, ks = [];
+        c.competitors.forEach(function (x) {
+          var a = String(x.team.abbreviation); a = FIX[a] || a;
+          var v = parseInt(x.score, 10); sc[a] = isFinite(v) ? v : 0; ks.push(a);
+        });
+        if (ks.length !== 2) return;
+        games[ks.slice().sort().join("|")] = {sc: sc, state: String(st.state || ""), done: st.completed !== false, detail: String(st.shortDetail || "")};
+        n++;
+      } catch (e) { /* malformed event: skip it */ }
+    });
+    return n ? {at: at || Date.now(), games: games} : null;
+  }
+  function kickoffMs(when, year) {   // "Mon 10/12 5:15PM PT" -> epoch ms (PT; DST approximated, the window is wide)
+    var m = /(\d{1,2})\/(\d{1,2})\s+(\d{1,2})(?::(\d{2}))?\s*([AP])M/i.exec(String(when || ""));
+    if (!m || !year) return NaN;
+    var mo = +m[1], d = +m[2], h = (+m[3] % 12) + (m[5].toUpperCase() === "P" ? 12 : 0), mi = +(m[4] || 0);
+    var dst = (mo > 3 && mo < 11) || (mo === 3 && d >= 8) || (mo === 11 && d < 1);
+    return Date.UTC(+year, mo - 1, d, h + (dst ? 7 : 8), mi);
+  }
+  /** Should this poll ask ESPN? Any non-hidden game not final on the board that is live or within its kickoff window. */
+  function wantEspn(b, now) {
+    if (!ESPN || !b || !b.games || !b.status) return false;
+    now = now || Date.now();
+    return b.games.some(function (g) {
+      if (g.hidden || g.status === "final") return false;
+      if (g.status === "live") return true;
+      var k = kickoffMs(g.when, b.year);
+      return isFinite(k) && now >= k - 30 * 60000 && now <= k + 6 * 3600000;
+    });
+  }
+  function fmtUpdated(ms) {
+    try {
+      var s = new Intl.DateTimeFormat("en-US", {timeZone: "America/Los_Angeles", weekday: "short", hour: "numeric", minute: "2-digit"}).format(new Date(ms));
+      return "Updated " + s.replace(",", "") + " PT \u00B7 live";
+    } catch (e) { return null; }
+  }
+  /** board + parsed ESPN -> board with ESPN filling the gaps (pure; exported for tests). Board finals always win; hidden
+   *  games, sunday_final, paid, void, tiebreakers and winner are never touched. */
+  function espnOverlay(b, es, now) {
+    if (!b || !b.games || !b.status || !es || !es.games) return b;
+    now = now || Date.now();
+    if (now - es.at > ESPN_MAX_AGE) return b;                           // stale ESPN: board only
+    var bt = Date.parse(b.status.last_updated_iso || ""), fresher = !isFinite(bt) || es.at >= bt;
+    var abbr = b.abbr || {}, full = {}; Object.keys(abbr).forEach(function (n) { full[abbr[n]] = n; });
+    var out = JSON.parse(JSON.stringify(b)), finals = [], touched = false;
+    out.games.forEach(function (g) {
+      if (g.hidden || g.status === "final") return;                     // board final wins; hidden stays hidden
+      var e = es.games[[g.away, g.home].sort().join("|")]; if (!e || e.sc[g.away] == null || e.sc[g.home] == null) return;
+      var A = e.sc[g.away], H = e.sc[g.home], line = g.away + " " + A + " \u2013 " + g.home + " " + H;
+      if (e.state === "post" && e.done) {
+        g.status = "final"; g.score = line; delete g.clock;
+        g.winner = A > H ? (full[g.away] || g.away) : H > A ? (full[g.home] || g.home) : "TIE";
+        g.espn = true; finals.push(g); touched = true;
+      } else if (e.state === "in" && fresher) {
+        g.status = "live"; g.score = line + " (" + e.detail + ")"; g.clock = normClock(e.detail); g.espn = true; touched = true;
+      }
+    });
+    if (!touched) { out.status.text = out.status.text || {}; var u0 = fmtUpdated(es.at); if (u0 && fresher) out.status.text.updated = u0; return out; }
+    var st = out.status;
+    if (finals.length) {
+      finals.forEach(function (g) {
+        var wab = g.winner === "TIE" ? null : (abbr[g.winner] || g.winner);
+        out.players.forEach(function (p) {
+          var c = p.picks && p.picks[g.key]; if (!c || c.cls === "pick-hidden") return;
+          var win = wab != null && c.text === wab;
+          p.picks[g.key] = {cls: win ? "pick-win" : "pick-loss", text: c.text};
+          if (win) p.score = (p.score || 0) + 1;
+        });
+      });
+      st.games_final = out.games.filter(function (g) { return g.status === "final"; }).length;
+      var mon = finals.filter(function (g) { return /^mon/i.test(String(g.when || "")); })[0];
+      if (mon && st.sunday_final && out.mnf_total == null) {            // tiebreakers already revealed by the board
+        var nums = String(mon.score).replace(/\(.*?\)/g, "").match(/\b\d{1,3}\b/g) || [];
+        if (nums.length > 1) {
+          out.mnf_total = +nums[0] + +nums[1];
+          out.players.forEach(function (p) { if (p.tiebreaker != null && isFinite(p.tiebreaker)) p.tiebreaker_off = Math.abs(p.tiebreaker - out.mnf_total); });
+        }
+      }
+    }
+    st.live_games = out.games.filter(function (g) { return g.status === "live" && !g.hidden; }).map(function (g) {
+      var n = String(g.score || "").replace(/\(.*?\)/g, "").match(/\b\d{1,3}\b/g) || [];
+      return {away: g.away, home: g.home, away_score: n.length > 0 ? +n[0] : null, home_score: n.length > 1 ? +n[1] : null, clock: g.clock || "LIVE"};
+    });
+    var allFinal = out.games.length && out.games.every(function (g) { return g.status === "final"; });
+    if (allFinal) st.state = "final"; else if (st.live_games.length) st.state = "live";
+    st.text = st.text || {};
+    var u = fmtUpdated(es.at); if (u) st.text.updated = u;
+    if (finals.length) restat(out, out.players);
+    out.espn_at = es.at;
     return out;
   }
 
@@ -342,7 +473,9 @@
     var gone = tombKeys(real, entries, tombs);
     if (needsReload(real, gone)) return;
     hideTombRows(real, gone);
-    var b = applyVoid(applyPaid(merge(dropTombstoned(real, entries, tombs), entries, paidLive), entries, paidLive), entries);
+    var live = real;
+    try { live = espnOverlay(real, lastEspn) || real; } catch (e) { live = real; }   // never let ESPN break the board
+    var b = applyVoid(applyPaid(merge(dropTombstoned(live, entries, tombs), entries, paidLive), entries, paidLive), entries);
     var closed = pastClose(b.status);
     if (closed) b = closedBoard(b);
     syncWebRows(real, b);
@@ -381,13 +514,23 @@
     return fetch(u + (u.indexOf("?") < 0 ? "?" : "&") + "t=" + Date.now(), {cache: "no-store"})
       .then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
   }
+  function getEspn(b) {
+    var u = wantEspn(b) ? espnUrl(b) : null;
+    if (!u) { lastEspn = null; return Promise.resolve(null); }            // nothing live / all final: no ESPN request
+    return fetch(u, {cache: "no-store", credentials: "omit", referrerPolicy: "no-referrer"})
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) { var p = parseEspn(j, b, Date.now()); if (p) lastEspn = p; return p; })
+      .catch(function () { return null; });                               // CORS / network / bad JSON: keep the board
+  }
   function refresh() {
     if (busy || document.visibilityState === "hidden") return;
     busy = true;
     getJSON(URL_).then(function (b) {
       if (!b) return;
-      if (!ENTRIES) return apply(b, null, false, []);
-      return getJSON(ENTRIES + "?week=" + encodeURIComponent(b.week)).then(function (r) {
+      var ep = getEspn(b);
+      if (!ENTRIES) return ep.then(function () { apply(b, null, false, []); });
+      return Promise.all([getJSON(ENTRIES + "?week=" + encodeURIComponent(b.week)), ep]).then(function (res) {
+        var r = res[0];
         if (r && r.ok && Array.isArray(r.entries) && String(r.week) === String(b.week)) {     // keep the last good lists on errors
           lastEntries = r.entries; lastPaidLive = r.paid_live === true; lastTombs = Array.isArray(r.tombstones) ? r.tombstones : [];
         }
@@ -403,5 +546,5 @@
   });
   scheduleClose(null);                                               // from the page's data-submit-close, before any fetch
   if (document.visibilityState !== "hidden") { refresh(); start(); }
-  window.PickemsLive = {refresh: refresh, apply: apply, merge: merge, applyPaid: applyPaid, applyVoid: applyVoid, dropTombstoned: dropTombstoned, playerKey: playerKey};
+  window.PickemsLive = {refresh: refresh, apply: apply, merge: merge, applyPaid: applyPaid, applyVoid: applyVoid, espnOverlay: espnOverlay, parseEspn: parseEspn, wantEspn: wantEspn, normClock: normClock, dropTombstoned: dropTombstoned, playerKey: playerKey};
 })();

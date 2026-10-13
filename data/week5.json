@@ -5,7 +5,7 @@
  "open": true,
  "sunday_final": true,
  "monday_final": true,
- "week_done": false,
+ "week_done": true,
  "board_names": [],
  "games": [
   {
@@ -189,5 +189,5 @@
    "is_tiebreaker": true
   }
  ],
- "generated_at": "2026-10-12T20:48:10-07:00"
+ "generated_at": "2026-10-12T20:51:15-07:00"
 }

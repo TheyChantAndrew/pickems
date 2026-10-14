@@ -6,6 +6,11 @@
    build_site <template data-row> or an existing row, marked data-web="1"), scored with the board's results by the same rules as pickems_status, so a new
    entry shows within a poll instead of waiting for the box sync. Once the sync puts it on the board, the row is
    adopted in place (no reload); if the entry disappears from the server, the row is removed.
+   Edits (added 2026-10-13): a synced web row (player.online + player.entry) shows the entry's CURRENT picks from
+   /api/entries, not the board JSON's copy (applyEdits). The board JSON only changes when the box sync publishes (every
+   ~10 min + deploy), so before this a "Picks updated!" change stayed invisible on the board until then and looked like
+   the edit had failed. Only games the board shows (not hidden) and picks the API sends (Monday picks are omitted until
+   Sunday is final) are overlaid; paper players and merged rows are never touched; scores, splits, ranks recomputed.
    A new week, or a real board player added/removed, triggers ONE full reload instead (never a loop).
    Paid (Turso is the source of truth for web entries, toggled in /admin): when /api/entries says paid_live, each poll and
    page load applies every entry's paid to the board players it belongs to (synced web rows matched on player.entry/key,
@@ -290,6 +295,39 @@
     });
   }
 
+  /** board + public entries -> board whose synced web players (online, entry) carry the entry's CURRENT picks from Turso
+   *  (see "Edits" above). Week-agnostic: matches on player.entry = the stored name, never on a week number. Only overlays
+   *  games the board shows (g.hidden stays hidden) and picks the API sent; after the lock the API and the board agree, so
+   *  it's a no-op then. Pure (copies when anything changes); exported for tests. */
+  function applyEdits(b, entries) {
+    if (!b || !b.players || !b.games || !b.status || !entries || !entries.length) return b;
+    var abbr = b.abbr || {}, ab = function (t) { return abbr[t] || String(t).slice(0, 3).toUpperCase(); };
+    var byName = {};
+    entries.forEach(function (en) { if (en && en.name && en.picks && typeof en.picks === "object") byName[nameKey(en.name)] = en; });
+    var todo = [];
+    b.players.forEach(function (p, i) {
+      if (p.web || p.online !== true || p.entry == null || !p.picks) return;
+      var en = byName[nameKey(p.entry)]; if (!en) return;
+      b.games.forEach(function (g) {
+        if (g.hidden) return;
+        var pick = en.picks[g.matchup]; if (typeof pick !== "string" || !pick) return;
+        var cur = p.picks[g.key], text = ab(pick);
+        if (!cur || typeof cur !== "object" || cur.text !== text) todo.push({i: i, g: g, pick: pick, text: text});
+      });
+    });
+    if (!todo.length) return b;
+    var out = JSON.parse(JSON.stringify(b));
+    todo.forEach(function (t) {
+      var p = out.players[t.i], g = t.g, old = p.picks[g.key], cls = "pick-pending";
+      if (g.status === "final" && g.winner) {
+        cls = t.pick === g.winner ? "pick-win" : "pick-loss";
+        p.score = Number(p.score || 0) - (old && old.cls === "pick-win" ? 1 : 0) + (cls === "pick-win" ? 1 : 0);
+      }
+      p.picks[g.key] = {cls: cls, text: t.text};
+    });
+    out.edits_applied = todo.length;
+    return restat(out, out.players);
+  }
   /** board + public entries (paid_live) -> board whose synced web players carry the DB paid flag, payout recomputed (pure;
    *  exported for tests). Merged rows (p.web) already got theirs in merge(). Paper players (online false) are never touched. */
   function applyPaid(b, entries, paidLive) {
@@ -477,7 +515,7 @@
     hideTombRows(real, gone);
     var live = real;
     try { live = espnOverlay(real, lastEspn) || real; } catch (e) { live = real; }   // never let ESPN break the board
-    var b = applyVoid(applyPaid(merge(dropTombstoned(live, entries, tombs), entries, paidLive), entries, paidLive), entries);
+    var b = applyVoid(applyPaid(merge(applyEdits(dropTombstoned(live, entries, tombs), entries), entries, paidLive), entries, paidLive), entries);
     var closed = pastClose(b.status);
     if (closed) b = closedBoard(b);
     syncWebRows(real, b);
@@ -548,5 +586,5 @@
   });
   scheduleClose(null);                                               // from the page's data-submit-close, before any fetch
   if (document.visibilityState !== "hidden") { refresh(); start(); }
-  window.PickemsLive = {refresh: refresh, apply: apply, merge: merge, applyPaid: applyPaid, applyVoid: applyVoid, espnOverlay: espnOverlay, parseEspn: parseEspn, wantEspn: wantEspn, normClock: normClock, dropTombstoned: dropTombstoned, playerKey: playerKey};
+  window.PickemsLive = {refresh: refresh, apply: apply, merge: merge, applyEdits: applyEdits, applyPaid: applyPaid, applyVoid: applyVoid, espnOverlay: espnOverlay, parseEspn: parseEspn, wantEspn: wantEspn, normClock: normClock, dropTombstoned: dropTombstoned, playerKey: playerKey};
 })();

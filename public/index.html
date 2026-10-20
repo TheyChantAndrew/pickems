@@ -199,7 +199,7 @@ tr.lead td.pick-win{background:#15803d} tr.lead td.pick-loss{background:#3a1420}
 <script src="/live.js" defer></script>
 </head><body>
 <header><div class="wrap"><h1>🎃 Fam Bash Pickems</h1>
-<div class="meta">Week 6 · 2026<span class="br"></span><span data-hook="updated">Updated Mon 9:08 PM PT</span></div></div></header>
+<div class="meta">Week 6 · 2026<span class="br"></span><span data-hook="updated">Updated Mon 9:13 PM PT</span></div></div></header>
 <main class="wrap">
 <a class="prevwk" href="/week5">🏁 Week 5 final: <b>Mario</b> won $100 · see the final board →</a>
 <section id="status-card" class="status" data-state="final" data-week="6" data-locked="false" data-submit="closed" data-picks="locked" data-submit-close="2026-10-15T17:15:00-07:00" aria-label="Week 6 status">
@@ -265,7 +265,15 @@ document.addEventListener('pickems:board',function(ev){var b=ev.detail||{},st=b.
   else th.textContent=th.parentNode.getAttribute('data-when')||th.textContent;});
 });})();
 </script>
-<div id="prank" class="pkm" hidden onclick="if(event.target===this)pkClose()"><div class="pkm-box"><button type="button" class="pkm-x" onclick="pkClose()" aria-label="Close">✕</button><div class="pkm-v" id="pkmv"></div></div></div>
-<script>function pkPrank(ev){if(ev)ev.preventDefault();var m=document.getElementById('prank');document.getElementById('pkmv').innerHTML='<iframe src="https://www.youtube-nocookie.com/embed/wnedkVrgFF0?autoplay=1&playsinline=1&rel=0" title="Referral code" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen playsinline></iframe>';m.hidden=false;return false}function pkClose(){var m=document.getElementById('prank');m.hidden=true;document.getElementById('pkmv').innerHTML=''}document.addEventListener('keydown',function(e){if(e.key==='Escape')pkClose()});</script>
+<div id="prank" class="pkm" hidden onclick="if(event.target===this)pkClose()"><div class="pkm-box"><button type="button" class="pkm-x" onclick="pkClose()" aria-label="Close">✕</button><div class="pkm-v" id="pkmv"><div id="pkmp"></div><button type="button" id="pkms" hidden onclick="pkSound()" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:3;font-size:22px;font-weight:800;padding:16px 26px;border:0;border-radius:14px;background:#ffd400;color:#111;box-shadow:0 0 24px #ffd400">Tap for sound 🔊</button></div></div></div>
+<script>var pkP=null,pkR=false,pkWant=false;
+window.onYouTubeIframeAPIReady=function(){pkP=new YT.Player('pkmp',{host:'https://www.youtube-nocookie.com',videoId:'wnedkVrgFF0',width:'100%',height:'100%',playerVars:{autoplay:0,playsinline:1,rel:0,modestbranding:1,controls:1},events:{onReady:function(){pkR=true;var f=pkP.getIframe();f.setAttribute('allow','autoplay; encrypted-media; fullscreen; picture-in-picture');f.setAttribute('allowfullscreen','');f.title='Referral code';if(pkWant)pkGo()},onStateChange:function(e){if(e.data===1)pkChk()}}})};
+(function(){var t=document.createElement('script');t.src='https://www.youtube.com/iframe_api';t.async=true;document.head.appendChild(t)})();
+function pkChk(){if(!pkP||!pkP.isMuted)return;document.getElementById('pkms').hidden=!pkP.isMuted()}
+function pkGo(){try{pkP.unMute();pkP.setVolume(100);pkP.seekTo(0,true);pkP.playVideo();setTimeout(function(){if(pkP.getPlayerState()!==1){pkP.mute();pkP.playVideo();setTimeout(pkChk,600)}},900)}catch(e){}}
+function pkSound(){if(pkP){pkP.unMute();pkP.setVolume(100);pkP.playVideo()}document.getElementById('pkms').hidden=true}
+function pkPrank(ev){if(ev)ev.preventDefault();document.getElementById('prank').hidden=false;if(pkP&&pkR)pkGo();else pkWant=true;return false}
+function pkClose(){document.getElementById('prank').hidden=true;pkWant=false;document.getElementById('pkms').hidden=true;try{pkP.pauseVideo();pkP.seekTo(0,true);pkP.stopVideo()}catch(e){}}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')pkClose()});</script>
 
 </body></html>

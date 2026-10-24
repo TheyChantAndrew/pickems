@@ -1,4 +1,20 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8">
+<!doctype html><html lang="en" class="theme-halloween"><head><meta charset="utf-8"><script>(function(){/* Pickems theme switch (Pickems Web). Inlined by build_site.py + build_submit.py right after meta charset. Must agree with theme_for(): Thanksgiving from 2026-11-01 PT = 07:00Z. */
+var T=[["2026-11-01T07:00:00Z","thanksgiving","#24110a"]],D=["halloween","#1a0b08"],
+h=document.documentElement,pin=h.getAttribute("data-theme-pin"),q=/[?&]theme=(\w+)/.exec(location.search),
+N=[D[0]].concat(T.map(function(t){return t[1]}));
+function col(n){var c=D[1];T.forEach(function(t){if(t[1]===n)c=t[2]});return c}
+function pick(){var n=D[0],now=Date.now();T.forEach(function(t){if(now>=Date.parse(t[0]))n=t[1]});return n}
+function apply(){
+var n=(q&&N.indexOf(q[1])>=0)?q[1]:(pin&&N.indexOf(pin)>=0)?pin:pick();
+[h,document.body].forEach(function(el){if(!el)return;N.forEach(function(a){if(a!==n)el.classList.remove("theme-"+a)});el.classList.add("theme-"+n)});
+h.setAttribute("data-theme",n);
+var m=document.querySelector('meta[name="theme-color"]');if(m&&m.getAttribute("content")!==col(n))m.setAttribute("content",col(n));
+return n}
+window.pkTheme=apply;apply();
+if(!document.body)document.addEventListener("DOMContentLoaded",apply);
+for(var i=0;i<T.length;i++){var ms=Date.parse(T[i][0])-Date.now();if(ms>0&&ms<864e5){setTimeout(apply,ms+500);break}}
+document.addEventListener("visibilitychange",function(){if(!document.hidden)apply()});
+})();</script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1a0b08">
 <title>Fam Bash Pickems · Week 6 (final)</title>
@@ -195,11 +211,50 @@ tr.lead td.pick-win{background:#15803d} tr.lead td.pick-loss{background:#3a1420}
 @media (max-width:440px){header .wrap{display:block} .meta{text-align:left;margin-top:3px;font-size:12.5px} .meta .br{display:inline} .meta .br::before{content:" · "}}
 @media (max-width:440px){#standings .tbc .dim{display:block;font-size:11px;line-height:1.1}}   /* "(off N)" under the TB value: more room for names */
 @media (max-width:370px){.tile .k{font-size:11px;letter-spacing:.02em} .pdc{width:76px}}
+
+/* ===== themes: Halloween = the unscoped CSS above; Thanksgiving = overrides under .theme-thanksgiving (class on html + body, set by the build and by theme_switch.js) ===== */
+.ti-thanksgiving{display:none} .theme-thanksgiving .ti-halloween{display:none} .theme-thanksgiving .ti-thanksgiving{display:inline}
+/* --- Thanksgiving (Nov): pumpkin, deep brown, gold, cranberry. Same layout/sizes/behavior; colors + decorations only. --- */
+html.theme-thanksgiving body{background-color:#1c1009;background-image:radial-gradient(circle at 8% 0,#4a1626 0,transparent 26%),radial-gradient(circle at 100% 0,#5e2c0b 0,transparent 24%)}
+/* falling-leaf corners: fixed, behind everything (cards are opaque, so they only show in the margins), low opacity, never in tables */
+html.theme-thanksgiving body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.16;
+ background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 110'%3E%3Cg transform='translate%2830 34%29 rotate%28-30%29 scale%282.1%29'%3E%3Cpath d='M0-11c5 3 8 8 8 12a8 8 0 0 1-16 0c0-4 3-9 8-12z' fill='%23e07b24'/%3E%3Cpath d='M0-8v17' stroke='%231c1009' stroke-width='1.2' opacity='.55'/%3E%3C/g%3E%3Cg transform='translate%2878 28%29 rotate%2825%29 scale%281.6%29'%3E%3Cpath d='M0-11c5 3 8 8 8 12a8 8 0 0 1-16 0c0-4 3-9 8-12z' fill='%23d9a21b'/%3E%3Cpath d='M0-8v17' stroke='%231c1009' stroke-width='1.2' opacity='.55'/%3E%3C/g%3E%3Cg transform='translate%2852 82%29 rotate%28160%29 scale%281.9%29'%3E%3Cpath d='M0-11c5 3 8 8 8 12a8 8 0 0 1-16 0c0-4 3-9 8-12z' fill='%23a8283c'/%3E%3Cpath d='M0-8v17' stroke='%231c1009' stroke-width='1.2' opacity='.55'/%3E%3C/g%3E%3Cg transform='translate%2898 76%29 rotate%28-70%29 scale%281.2%29'%3E%3Cpath d='M0-11c5 3 8 8 8 12a8 8 0 0 1-16 0c0-4 3-9 8-12z' fill='%23b4570f'/%3E%3Cpath d='M0-8v17' stroke='%231c1009' stroke-width='1.2' opacity='.55'/%3E%3C/g%3E%3C/svg%3E") no-repeat left -18px bottom -14px/150px auto,url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 110'%3E%3Cg transform='translate%2830 34%29 rotate%28-30%29 scale%282.1%29'%3E%3Cpath d='M0-11c5 3 8 8 8 12a8 8 0 0 1-16 0c0-4 3-9 8-12z' fill='%23e07b24'/%3E%3Cpath d='M0-8v17' stroke='%231c1009' stroke-width='1.2' opacity='.55'/%3E%3C/g%3E%3Cg transform='translate%2878 28%29 rotate%2825%29 scale%281.6%29'%3E%3Cpath d='M0-11c5 3 8 8 8 12a8 8 0 0 1-16 0c0-4 3-9 8-12z' fill='%23d9a21b'/%3E%3Cpath d='M0-8v17' stroke='%231c1009' stroke-width='1.2' opacity='.55'/%3E%3C/g%3E%3Cg transform='translate%2852 82%29 rotate%28160%29 scale%281.9%29'%3E%3Cpath d='M0-11c5 3 8 8 8 12a8 8 0 0 1-16 0c0-4 3-9 8-12z' fill='%23a8283c'/%3E%3Cpath d='M0-8v17' stroke='%231c1009' stroke-width='1.2' opacity='.55'/%3E%3C/g%3E%3Cg transform='translate%2898 76%29 rotate%28-70%29 scale%281.2%29'%3E%3Cpath d='M0-11c5 3 8 8 8 12a8 8 0 0 1-16 0c0-4 3-9 8-12z' fill='%23b4570f'/%3E%3Cpath d='M0-8v17' stroke='%231c1009' stroke-width='1.2' opacity='.55'/%3E%3C/g%3E%3C/svg%3E") no-repeat right -24px bottom 22%/120px auto}
+html.theme-thanksgiving header{position:relative;background:linear-gradient(100deg,#24110a 0%,#a8430f 48%,#7d1e2c 100%);border-bottom-color:#d9a21b}
+/* a thin leaf garland under the header (sits in main's top padding, no text there) */
+html.theme-thanksgiving header::after{content:"";position:absolute;left:0;right:0;bottom:-16px;height:12px;pointer-events:none;opacity:.55;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 14'%3E%3Cg transform='translate%2810 7%29 rotate%28-35%29 scale%280.55%29'%3E%3Cpath d='M0-11c5 3 8 8 8 12a8 8 0 0 1-16 0c0-4 3-9 8-12z' fill='%23e07b24'/%3E%3Cpath d='M0-8v17' stroke='%231c1009' stroke-width='1.2' opacity='.55'/%3E%3C/g%3E%3Cg transform='translate%2830 7%29 rotate%2840%29 scale%280.5%29'%3E%3Cpath d='M0-11c5 3 8 8 8 12a8 8 0 0 1-16 0c0-4 3-9 8-12z' fill='%23d9a21b'/%3E%3Cpath d='M0-8v17' stroke='%231c1009' stroke-width='1.2' opacity='.55'/%3E%3C/g%3E%3Cg transform='translate%2850 7%29 rotate%28-60%29 scale%280.55%29'%3E%3Cpath d='M0-11c5 3 8 8 8 12a8 8 0 0 1-16 0c0-4 3-9 8-12z' fill='%23a8283c'/%3E%3Cpath d='M0-8v17' stroke='%231c1009' stroke-width='1.2' opacity='.55'/%3E%3C/g%3E%3C/svg%3E") repeat-x 0 0/60px 12px}
+html.theme-thanksgiving h2{color:#f2c14e}
+html.theme-thanksgiving .card{background:#2b1a10;border-color:#4d3320}
+html.theme-thanksgiving th,html.theme-thanksgiving td{border-bottom-color:#4d3320}
+html.theme-thanksgiving th{background:#a4400f} html.theme-thanksgiving .picks th.mon{background:#7d1e2c}
+html.theme-thanksgiving .status{background:linear-gradient(180deg,#33200f,#2b1a10);border-color:#d9a21b}
+html.theme-thanksgiving .tile{background:#22140b;border-color:#4d3320}
+html.theme-thanksgiving .lockbanner{background:#22140b;border-color:#5a3b24;border-left-color:#d9a21b}
+html.theme-thanksgiving .jump{background:#1c1009ee;border-bottom-color:#4d3320}
+html.theme-thanksgiving .jump a{background:#2b1a10;border-color:#4d3320;color:#f2c14e}
+html.theme-thanksgiving .jump a:hover,html.theme-thanksgiving .jump a:focus-visible{background:#40260f;border-color:#d9a21b}
+@media (min-width:900px){html.theme-thanksgiving .jump{background:none;border:0}}
+html.theme-thanksgiving tr.lead td{background:#40260f}
+html.theme-thanksgiving .picks td.who{background:#2b1a10;box-shadow:2px 0 0 #4d3320} html.theme-thanksgiving .picks th.who{background:#a4400f;box-shadow:2px 0 0 #4d3320}
+html.theme-thanksgiving .picks tr.lead td.who{background:#40260f}
+html.theme-thanksgiving .picks tr.unpaid td.who{box-shadow:2px 0 0 #4d3320,inset 0 0 0 1px rgba(248,113,113,.45),inset 0 0 10px rgba(239,68,68,.28);animation-name:unpaid-pulse-who-tg}
+@keyframes unpaid-pulse-who-tg{0%,100%{box-shadow:2px 0 0 #4d3320,inset 0 0 0 1px rgba(248,113,113,.25),inset 0 0 10px rgba(239,68,68,0)}
+ 50%{box-shadow:2px 0 0 #4d3320,inset 0 0 0 1px rgba(248,113,113,.65),inset 0 0 12px rgba(239,68,68,.45)}}
+@media (prefers-reduced-motion:reduce){html.theme-thanksgiving .picks tr.unpaid td.who{animation:none}}
+html.theme-thanksgiving .picks tr.void.unpaid td.who{box-shadow:2px 0 0 #4d3320;animation:none}
+html.theme-thanksgiving .pick-split{background:#2b1a10} html.theme-thanksgiving td.pick-hidden,html.theme-thanksgiving tr.lead td.pick-hidden{background:#22140b;color:#d9c2a3}
+html.theme-thanksgiving .lockbox{background:#2a180c;border-color:#d9a21b;color:#f6e7cc}
+html.theme-thanksgiving .fade::after{background:linear-gradient(90deg,transparent,#1c1009cc)}
+html.theme-thanksgiving .hall{border-color:#d9a21b;background:linear-gradient(180deg,#33200f,#2b1a10)} html.theme-thanksgiving .hall th{background:#8a1c2e}
+html.theme-thanksgiving .hall tr.tot td,html.theme-thanksgiving .hype{background:#40260f} html.theme-thanksgiving .hype{border-top-color:#d9a21b}
+html.theme-thanksgiving .xw{background:#a63a12}
+html.theme-thanksgiving .prevwk{background:#2b1a10;border-color:#d9a21b88} html.theme-thanksgiving .prevwk:hover,html.theme-thanksgiving .prevwk:focus-visible{background:#3a2414;border-color:#d9a21b}
+html.theme-thanksgiving #standings tr.void td.who{color:#b8a48c}
+/* the green "Make your picks" button stays green (complement of the oranges/browns, so it pops); pulse, open-only gate and reduced-motion untouched */
 </style>
 <script>window.PICKEMS_LIVE={url:"/board/week6.json",entries:false,espn:false};</script><script src="/live.js" defer></script>
-</head><body>
-<header><div class="wrap"><h1>🎃 Fam Bash Pickems</h1>
-<div class="meta">Week 6 · 2026<span class="br"></span><span data-hook="updated">Updated Thu 10:00 PM PT</span></div></div></header>
+</head><body class="theme-halloween"><script>pkTheme()</script>
+<header><div class="wrap"><h1><span class="ti-halloween">🎃</span><span class="ti-thanksgiving">🦃</span> Fam Bash Pickems</h1>
+<div class="meta">Week 6 · 2026<span class="br"></span><span data-hook="updated">Updated Sat 3:23 PM PT</span></div></div></header>
 <main class="wrap">
 <a class="prevwk" href="/">👉 Week 7 is open. Back to the current board →</a>
 <section id="status-card" class="status" data-state="final" data-week="6" data-locked="false" data-submit="closed" data-picks="locked" data-submit-close="2026-10-15T17:15:00-07:00" aria-label="Week 6 status">

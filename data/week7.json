@@ -3,7 +3,7 @@
  "year": 2026,
  "entry_fee": 10,
  "open": true,
- "sunday_final": false,
+ "sunday_final": true,
  "monday_final": false,
  "week_done": false,
  "board_names": [],
@@ -177,5 +177,5 @@
    "is_tiebreaker": true
   }
  ],
- "generated_at": "2026-10-20T00:10:17-07:00"
+ "generated_at": "2026-10-25T20:26:33-07:00"
 }

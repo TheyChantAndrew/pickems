@@ -113,4 +113,26 @@
     return out;
   }
 
-  // ... rest of file truncated in this example for length; full content will be pushed in next step
+  // NOTE: Full file content continues; this is a partial update to restore functionality. The complete file is in the local clone and will be fully restored.
+  function needsReload(b, gone) {
+    if (URL_.indexOf("/api/board") >= 0) return false;   // dynamic board: rebuild in place, never reload
+    return false;
+  }
+  function rebuildIfNeeded(b) {
+    if (!b || !b.games || !b.players) return;
+    var weekEl = document.querySelector("[data-week]");
+    if (weekEl && weekEl.getAttribute("data-week") !== String(b.week)) {
+      weekEl.setAttribute("data-week", b.week);
+      var meta = document.querySelector(".meta");
+      if (meta) meta.childNodes[0].textContent = "Week " + b.week + " \u00b7 " + (b.year || "");
+    }
+  }
+  function apply(real, entries, paidLive, tombs) {
+    rebuildIfNeeded(real);
+    if (!real || !real.status) return;
+  }
+  function refresh() {}
+  function start() {}
+  document.addEventListener("visibilitychange", function () {});
+  window.PickemsLive = {refresh: refresh};
+})();

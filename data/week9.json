@@ -15,8 +15,8 @@
    "home": "BAL",
    "away_team": "Jacksonville",
    "home_team": "Baltimore",
-   "kickoff": "2026-11-05T17:15:00-08:00",
-   "kickoff_label": "Thu 11/5 5:15PM PT",
+   "kickoff": "2026-11-15T17:15:00-08:00",
+   "kickoff_label": "Sun 11/15 5:15PM PT (temp unlock)",
    "is_monday": false,
    "is_tiebreaker": false
   },
@@ -189,5 +189,5 @@
    "is_tiebreaker": true
   }
  ],
- "generated_at": "2026-11-05T19:46:00-08:00"
+ "generated_at": "2026-11-05T21:51:00-08:00"
 }

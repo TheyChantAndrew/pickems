@@ -1,1 +1,38 @@
-ATTEMPTING_FULL_RESTORE_7
+<!doctype html>
+<html lang="en" class="theme-thanksgiving">
+<head>
+<meta charset="utf-8">
+<title>Fam Bash Pickems · Week 9</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+body{font-family:system-ui,sans-serif;background:#140c18;color:#f6efe4;margin:0;padding:20px}
+.card{background:#24162e;border-radius:12px;padding:16px;margin:12px 0;border:1px solid #3d2a4a}
+h1{color:#fdba74}
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px;text-align:left;border-bottom:1px solid #3d2a4a}
+th{background:#c2410c}
+.hall{border:2px solid #f59e0b}
+</style>
+</head>
+<body>
+<h1>Fam Bash Pickems · Week 9</h1>
+<div class="card" id="status">Loading…</div>
+<div class="card" id="standings"><h2>Standings</h2><div id="standings-body">Loading…</div></div>
+<div class="card hall" id="hall"><h2>🏆 Hall of Champions</h2>
+<table><tr><th>Week</th><th>Champion</th><th>Correct</th><th>Winnings</th></tr>
+<tr><td>Wk 8</td><td>Mario (Niños Bonitos)</td><td>12/14 <small>won TB (41 vs 28)</small></td><td>$100</td></tr>
+<tr><td>Wk 7</td><td>GC (DUUUVALLL)</td><td>9/14</td><td>$100</td></tr>
+</table>
+<p>👀 Your name could be next.</p>
+</div>
+<script>
+fetch("/api/games?board=1").then(r=>r.json()).then(b=>{
+  var st = b.status || {};
+  document.getElementById("status").textContent = "Week " + b.week + " · " + (st.entries||0) + " entries · " + (st.text && st.text.lock || "");
+  var el = document.getElementById("standings-body");
+  if (!b.players || !b.players.length) el.textContent = "No entries yet this week";
+  else el.textContent = b.players.length + " players";
+});
+</script>
+</body>
+</html>

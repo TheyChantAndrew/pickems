@@ -1,1 +1,26 @@
-RESTORING_REAL_CONTENT_NOW
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Fam Bash Pickems · Week 9</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+body{font-family:system-ui,sans-serif;background:#140c18;color:#f6efe4;margin:0;padding:20px}
+.card{background:#24162e;border-radius:12px;padding:16px;margin:12px 0;border:1px solid #3d2a4a}
+h1{color:#fdba74}
+</style>
+</head>
+<body>
+<h1>Fam Bash Pickems</h1>
+<div class="card" id="status">Loading Week 9…</div>
+<div class="card" id="standings"><h2>Standings</h2><p id="empty">Loading…</p></div>
+<script>
+fetch("/api/games?board=1").then(r=>r.json()).then(b=>{
+  document.getElementById("status").textContent = "Week " + b.week + " · " + (b.status.entries||0) + " entries · " + (b.status.text&&b.status.text.lock||"");
+  var el = document.getElementById("empty");
+  if (!b.players || !b.players.length) el.textContent = "No entries yet this week";
+  else el.textContent = b.players.length + " players";
+});
+</script>
+</body>
+</html>

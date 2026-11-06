@@ -10,7 +10,6 @@
 
   function $(sel, root) { return (root || document).querySelector(sel); }
   function $$(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
-  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return {"&":"&","<":"<",">":">","\"":""","'":"&#39;"}[c]; }); }
 
   function setHook(name, text) {
     $$('[data-hook="' + name + '"]').forEach(function (el) { el.textContent = text == null ? "" : String(text); });
@@ -32,7 +31,13 @@
     var players = b.players || [];
     if (!players.length) {
       var empty = document.createElement("tr");
-      empty.innerHTML = '<td colspan="5" style="text-align:center;padding:18px;color:#d6c4a8">No entries yet this week</td>';
+      var td = document.createElement("td");
+      td.colSpan = 5;
+      td.style.textAlign = "center";
+      td.style.padding = "18px";
+      td.style.color = "#d6c4a8";
+      td.textContent = "No entries yet this week";
+      empty.appendChild(td);
       tbody.appendChild(empty);
       return;
     }
@@ -46,15 +51,62 @@
       tr.setAttribute("data-player", p.key || "");
       tr.setAttribute("data-rank", p.rank || "");
       tr.setAttribute("data-leader", p.leader ? "true" : "false");
-      var rankTxt = (p.rank && players.filter(function (x) { return x.rank === p.rank; }).length > 1 ? "T" : "") + (p.rank || "");
-      var paidHtml = p.void ? '<span class="void">VOID</span>' : (p.paid ? '<span class="paid">\u2713 paid</span>' : '<span class="owe">owes $' + fee + '</span>');
-      var tb = p.tiebreaker != null ? p.tiebreaker : "\u2014";
-      tr.innerHTML =
-        '<td class="rk"><span class="rkt">' + esc(rankTxt) + '</span></td>' +
-        '<td class="who" title="' + esc(p.display || p.name) + '">' + esc(p.name) + (p.tag ? ' <span class="tag">' + esc(p.tag) + '</span>' : '') + '</td>' +
-        '<td class="num sc"><b data-hook="score" data-player="' + esc(p.key) + '">' + (p.score || 0) + '</b><span class="of">/<span data-hook="games-final">' + gamesFinal + '</span></span></td>' +
-        '<td class="num tbc">' + esc(tb) + '</td>' +
-        '<td class="pdc" data-fee="' + fee + '">' + paidHtml + '</td>';
+      var sameRank = players.filter(function (x) { return x.rank === p.rank; }).length;
+      var rankTxt = (sameRank > 1 ? "T" : "") + (p.rank || "");
+
+      var tdRk = document.createElement("td");
+      tdRk.className = "rk";
+      var sp = document.createElement("span");
+      sp.className = "rkt";
+      sp.textContent = rankTxt;
+      tdRk.appendChild(sp);
+      tr.appendChild(tdRk);
+
+      var tdWho = document.createElement("td");
+      tdWho.className = "who";
+      tdWho.title = p.display || p.name || "";
+      tdWho.appendChild(document.createTextNode(p.name || ""));
+      if (p.tag) {
+        var tag = document.createElement("span");
+        tag.className = "tag";
+        tag.textContent = p.tag;
+        tdWho.appendChild(document.createTextNode(" "));
+        tdWho.appendChild(tag);
+      }
+      tr.appendChild(tdWho);
+
+      var tdSc = document.createElement("td");
+      tdSc.className = "num sc";
+      var bEl = document.createElement("b");
+      bEl.setAttribute("data-hook", "score");
+      bEl.setAttribute("data-player", p.key || "");
+      bEl.textContent = p.score || 0;
+      tdSc.appendChild(bEl);
+      var of = document.createElement("span");
+      of.className = "of";
+      of.appendChild(document.createTextNode("/"));
+      var gf = document.createElement("span");
+      gf.setAttribute("data-hook", "games-final");
+      gf.textContent = gamesFinal;
+      of.appendChild(gf);
+      tdSc.appendChild(of);
+      tr.appendChild(tdSc);
+
+      var tdTb = document.createElement("td");
+      tdTb.className = "num tbc";
+      tdTb.textContent = p.tiebreaker != null ? p.tiebreaker : "\u2014";
+      tr.appendChild(tdTb);
+
+      var tdPaid = document.createElement("td");
+      tdPaid.className = "pdc";
+      tdPaid.setAttribute("data-fee", fee);
+      var badge = document.createElement("span");
+      if (p.void) { badge.className = "void"; badge.textContent = "VOID"; }
+      else if (p.paid) { badge.className = "paid"; badge.textContent = "\u2713 paid"; }
+      else { badge.className = "owe"; badge.textContent = "owes $" + fee; }
+      tdPaid.appendChild(badge);
+      tr.appendChild(tdPaid);
+
       tbody.appendChild(tr);
     });
   }
@@ -74,7 +126,11 @@
       th.setAttribute("data-game", g.key);
       th.setAttribute("data-when", g.when || "");
       th.className = "g" + (g.is_monday ? " mon" : "");
-      th.innerHTML = (g.matchup || g.key) + '<div class="sub">' + (g.status === "final" && g.score ? esc(g.score) + " F" : (g.when || "")) + "</div>";
+      th.appendChild(document.createTextNode(g.matchup || g.key));
+      var sub = document.createElement("div");
+      sub.className = "sub";
+      sub.textContent = (g.status === "final" && g.score) ? (g.score + " F") : (g.when || "");
+      th.appendChild(sub);
       thead.appendChild(th);
     });
     var tbTh = document.createElement("th"); tbTh.textContent = "TB"; thead.appendChild(tbTh);
@@ -84,7 +140,13 @@
     var players = b.players || [];
     if (!players.length) {
       var empty = document.createElement("tr");
-      empty.innerHTML = '<td colspan="' + ((b.games || []).length + 3) + '" style="text-align:center;padding:18px;color:#d6c4a8">No picks yet</td>';
+      var td = document.createElement("td");
+      td.colSpan = (b.games || []).length + 3;
+      td.style.textAlign = "center";
+      td.style.padding = "18px";
+      td.style.color = "#d6c4a8";
+      td.textContent = "No picks yet";
+      empty.appendChild(td);
       tbody.appendChild(empty);
       return;
     }
@@ -95,7 +157,20 @@
       var who = document.createElement("td");
       who.className = "who";
       who.title = p.display || p.name || "";
-      who.innerHTML = '<div class="nmrow"><span class="nmw"><span class="nm">' + esc(p.name) + '</span>' + (p.tag ? '<span class="tag">' + esc(p.tag) + '</span>' : '') + '</span><span class="scb">' + (p.score || 0) + '</span></div>';
+      var nm = document.createElement("span");
+      nm.className = "nm";
+      nm.textContent = p.name || "";
+      who.appendChild(nm);
+      if (p.tag) {
+        var tag = document.createElement("span");
+        tag.className = "tag";
+        tag.textContent = p.tag;
+        who.appendChild(tag);
+      }
+      var scb = document.createElement("span");
+      scb.className = "scb";
+      scb.textContent = p.score || 0;
+      who.appendChild(scb);
       tr.appendChild(who);
       (b.games || []).forEach(function (g) {
         var td = document.createElement("td");
@@ -112,7 +187,10 @@
       tr.appendChild(tb);
       var tot = document.createElement("td");
       tot.className = "num b tot";
-      tot.innerHTML = '<span data-hook="score">' + (p.score || 0) + '</span>';
+      var sp = document.createElement("span");
+      sp.setAttribute("data-hook", "score");
+      sp.textContent = p.score || 0;
+      tot.appendChild(sp);
       tr.appendChild(tot);
       tbody.appendChild(tr);
     });

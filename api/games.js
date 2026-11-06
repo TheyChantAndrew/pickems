@@ -78,7 +78,7 @@ function buildGames(wd, espn) {
     let status = 'pre', score = null, winner = null, clock = null;
     if (e && e.sc[g.away] != null && e.sc[g.home] != null) {
       const A = e.sc[g.away], H = e.sc[g.home];
-      const line = g.away + ' ' + A + ' \u2013 ' + g.home + ' ' + H;
+      const line = g.away + ' ' + A + ' – ' + g.home + ' ' + H;
       if (e.state === 'post' && e.done) {
         status = 'final'; score = line;
         winner = A > H ? g.away_team : H > A ? g.home_team : 'TIE';
@@ -100,7 +100,7 @@ function scorePlayers(entries, games, abbr, sundayFinal) {
       if (!g) continue;
       const ab = abbr[team] || team;
       let cls = 'pick-pending', text = ab;
-      if (g.hidden) { cls = 'pick-hidden'; text = '\uD83D\uDD12'; }
+      if (g.hidden) { cls = 'pick-hidden'; text = '🔒'; }
       else if (g.status === 'final') {
         if (g.winner === 'TIE') cls = 'pick-split';
         else {
@@ -145,8 +145,8 @@ function buildStatus(wd, games, players, nowMs, currentWeek) {
     pot: '$' + pot,
     payout: '$' + pot,
     entries: players.length + ' entries',
-    leader: leaders.length ? leaders.map(l => l.name).join(' & ') + ' \u00b7 ' + leaders[0].score : '\u2014',
-    leader_short: leaders.length > 1 ? 'Tied: ' + leaders.map(l => l.name).join(', ') : (leaders[0] ? leaders[0].name : '\u2014'),
+    leader: leaders.length ? leaders.map(l => l.name).join(' & ') + ' · ' + leaders[0].score : '—',
+    leader_short: leaders.length > 1 ? 'Tied: ' + leaders.map(l => l.name).join(', ') : (leaders[0] ? leaders[0].name : '—'),
     lock: locked ? 'All picks locked' : 'Picks open',
     updated: 'Updated ' + new Date(nowMs).toLocaleString('en-US', {timeZone: 'America/Los_Angeles', weekday: 'short', hour: 'numeric', minute: '2-digit'}) + ' PT'
   };

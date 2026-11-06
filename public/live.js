@@ -214,28 +214,33 @@
     setHook("leader", text.leader || "\u2014");
     setHook("lock", text.lock || "");
     setHook("pot", text.pot || "");
+    var meta = $(".meta");
+    if (meta && b.week) {
+      var first = meta.childNodes[0];
+      if (first && first.nodeType === 3) first.textContent = "Week " + b.week + " \u00b7 " + (b.year || "");
+    }
     // ---- week labels (replace any hard-coded Week N) ----
     var wk = b.week;
     if (wk) {
-      document.title = "Fam Bash Pickems \u00b7 Week " + wk;
+      document.title = "Fam Bash Pickems · Week " + wk;
       var meta = $(".meta");
       if (meta) {
         var first = meta.childNodes[0];
-        if (first && first.nodeType === 3) first.textContent = "Week " + wk + " \u00b7 " + (b.year || "");
+        if (first && first.nodeType === 3) first.textContent = "Week " + wk + " · " + (b.year || "");
       }
       var eyebrow = $(".eyebrow span:last-child");
       if (eyebrow) {
         var gf = (st.games_final != null ? st.games_final : 0);
         var gt = (st.games_total != null ? st.games_total : 0);
-        eyebrow.innerHTML = "Week " + wk + " \u00b7 <span data-hook=\"games-final\">" + gf + "</span> of " + gt + " final";
+        eyebrow.innerHTML = "Week " + wk + " · <span data-hook=\"games-final\">" + gf + "</span> of " + gt + " final";
       }
       var prev = $(".prevwk");
       if (prev && wk > 1) {
         prev.href = "/week" + (wk - 1);
-        prev.innerHTML = "\ud83c\udfc1 Week " + (wk - 1) + " final: see the board \u2192";
+        prev.innerHTML = "🏁 Week " + (wk - 1) + " final: see the board →";
       }
       var hype = $(".hype");
-      if (hype) hype.innerHTML = "\ud83d\udc40 Your name could be next. Week " + wk + " champ gets <b>$" + (st.payout || 0) + "</b>. Who\'s taking it? \ud83d\udcb0";
+      if (hype) hype.innerHTML = "👀 Your name could be next. Week " + wk + " champ gets <b>$" + (st.payout || 0) + "</b>. Who\'s taking it? 💰";
     }
     // ---- Hall of Champions: ensure Week 8 winner is present ----
     var hall = $(".hall table");
@@ -243,7 +248,7 @@
       var tbody = hall.querySelector("tbody") || hall;
       var row = document.createElement("tr");
       row.setAttribute("data-wk", "8");
-      row.innerHTML = "<td class=\"wk\">Wk 8</td><td class=\"who\" title=\"Mario (Ni\u00f1os Bonitos)\"><span class=\"hrow\"><span class=\"cup\" aria-hidden=\"true\">\ud83c\udfc6</span><b class=\"nm\">Mario</b></span><span class=\"tag\">Ni\u00f1os Bonitos</span></td><td class=\"num\">12/14<span class=\"hnote\">won TB (41 vs 28)</span></td><td class=\"num cash\">$100<span class=\"dim\">10 entries</span></td>";
+      row.innerHTML = "<td class=\"wk\">Wk 8</td><td class=\"who\" title=\"Mario (Niños Bonitos)\"><span class=\"hrow\"><span class=\"cup\" aria-hidden=\"true\">🏆</span><b class=\"nm\">Mario</b></span><span class=\"tag\">Niños Bonitos</span></td><td class=\"num\">12/14<span class=\"hnote\">won TB (41 vs 28)</span></td><td class=\"num cash\">$100<span class=\"dim\">10 entries</span></td>";
       var firstData = hall.querySelector("tr:not(:first-child)");
       if (firstData && firstData.parentNode) firstData.parentNode.insertBefore(row, firstData);
       else hall.appendChild(row);

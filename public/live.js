@@ -260,14 +260,22 @@
     try { document.dispatchEvent(new CustomEvent("pickems:board", {detail: b})); } catch (e) {}
   }
 
+  function showEmpty() {
+    var emptyBoard = { status: { state: "open", week: 9, submit_open: false, picks_locked: false, games_final: 0, games_total: 0, text: { entries: "0 entries", lock: "Picks open" } }, players: [], games: [] };
+    apply(emptyBoard);
+  }
+
   function refresh() {
     if (busy) return;
     busy = true;
     var u = URL_ + (URL_.indexOf("?") < 0 ? "?" : "&") + "t=" + Date.now();
     fetch(u, {cache: "no-store"})
       .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (b) { if (b && b.status) apply(b); })
-      .catch(function () {})
+      .then(function (b) { 
+        if (b && b.status) apply(b); 
+        else showEmpty();
+      })
+      .catch(function () { showEmpty(); })
       .then(function () { busy = false; });
   }
 

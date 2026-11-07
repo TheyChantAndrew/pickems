@@ -11,6 +11,24 @@
   function $(sel, root) { return (root || document).querySelector(sel); }
   function $$(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
 
+  function ensureCta() {
+    var card = $("#status-card");
+    if (!card) return;
+    if (card.querySelector(".cta")) return;
+    var banner = card.querySelector(".lockbanner");
+    var cta = document.createElement("a");
+    cta.className = "cta";
+    cta.href = "/submit";
+    cta.innerHTML = "Make your picks<span>$10 entry · free to edit until lock</span>";
+    if (banner && banner.nextSibling) {
+      banner.parentNode.insertBefore(cta, banner.nextSibling);
+    } else if (banner) {
+      banner.parentNode.appendChild(cta);
+    } else {
+      card.appendChild(cta);
+    }
+  }
+
   function setHook(name, text) {
     $$('[data-hook="' + name + '"]').forEach(function (el) { el.textContent = text == null ? "" : String(text); });
   }
@@ -255,14 +273,27 @@
       var tot = hall.querySelector("tr.tot .cash");
       if (tot) tot.textContent = "$830";
     }
+    ensureCta();
     rebuildStandings(b);
     rebuildPicks(b);
     try { document.dispatchEvent(new CustomEvent("pickems:board", {detail: b})); } catch (e) {}
   }
 
   function showEmpty() {
-    var emptyBoard = { status: { state: "open", week: 9, submit_open: false, picks_locked: false, games_final: 0, games_total: 0, text: { entries: "0 entries", lock: "Picks open" } }, players: [], games: [] };
+    // Force empty state when API fails so static old players don't remain
+    var emptyBoard = {
+      status: { state: "open", week: 9, submit_open: false, picks_locked: true, games_final: 0, games_total: 0, text: { lock: "All picks locked", entries: "0 entries", leader: "—", leader_short: "—" } },
+      players: [],
+      games: [],
+      week: 9,
+      year: 2026
+    };
     apply(emptyBoard);
+    var card = $("#status-card");
+    if (card) {
+      card.setAttribute("data-submit", "closed");
+      card.setAttribute("data-picks", "locked");
+    }
   }
 
   function refresh() {
@@ -271,8 +302,8 @@
     var u = URL_ + (URL_.indexOf("?") < 0 ? "?" : "&") + "t=" + Date.now();
     fetch(u, {cache: "no-store"})
       .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (b) { 
-        if (b && b.status) apply(b); 
+      .then(function (b) {
+        if (b && b.status) apply(b);
         else showEmpty();
       })
       .catch(function () { showEmpty(); })

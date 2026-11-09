@@ -19,13 +19,13 @@ document.addEventListener("visibilitychange",function(){if(!document.hidden)appl
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A6%83%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <title>Week 8 Picks · Fam Bash Pickems</title><meta name="theme-color" content="#24110a">
-<meta name="description" content="Make your Week 8 Fam Bash Pickems picks. Pick every game + tiebreaker right here. No sign-up. All picks lock at Thursday kickoff. $10 entry.">
+<meta name="description" content="Make your Week 8 Fam Bash Pickems picks. Pick every game + tiebreaker right here. No sign-up. Picks stay open until they are locked from the admin panel. $10 entry.">
 <meta property="og:type" content="website"><meta property="og:site_name" content="Fam Bash Pickems">
 <meta property="og:title" content="🦃 Make your Week 8 picks · Fam Bash Pickems">
-<meta property="og:description" content="Pick every game + tiebreaker right here. No sign-up. All picks lock at Thursday kickoff. $10 entry.">
+<meta property="og:description" content="Pick every game + tiebreaker right here. No sign-up. Picks stay open until they are locked from the admin panel. $10 entry.">
 <meta property="og:image" content="https://fambash-pickems.vercel.app/og-image.png"><meta property="og:url" content="https://fambash-pickems.vercel.app/submit">
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Make your Week 8 picks · Fam Bash Pickems">
-<meta name="twitter:description" content="Pick every game + tiebreaker right here. No sign-up. All picks lock at Thursday kickoff."><meta name="twitter:image" content="https://fambash-pickems.vercel.app/og-image.png">
+<meta name="twitter:description" content="Pick every game + tiebreaker right here. No sign-up. Picks stay open until they are locked from the admin panel."><meta name="twitter:image" content="https://fambash-pickems.vercel.app/og-image.png">
 <style>
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
@@ -140,8 +140,8 @@ html.theme-thanksgiving form[data-locked] .submit,html.theme-thanksgiving form[d
 </style></head><body class="live theme-thanksgiving"><script>pkTheme()</script>
 <header><div class="in"><div><h1><span class="ti-halloween">🎃</span><span class="ti-thanksgiving">🦃</span> Week 8 Picks</h1>
 <div class="meta">Fam Bash Pickems 2026 · $10 entry</div></div><a class="back" href="./">← Standings</a></div></header>
-<main><div id="topnote" class="topnote locked" role="status" aria-live="polite"><b>🔒 Pickems has started — picks are locked.</b> All Week 8 picks locked at Thursday kickoff (Thu 5:15 PM PT): every game, the Monday pick and the tiebreaker. <a class="tbtn" href="./">See the board →</a></div>
-<form id="f" novalidate autocomplete="on" data-locked="1"><fieldset class="fs" id="fs" disabled>
+<main><div id="topnote" class="topnote" role="status" aria-live="polite"><b>Picks are open.</b> Submit or edit until the week is locked from the admin panel. <a class="tbtn" href="./">See the board →</a></div>
+<form id="f" novalidate autocomplete="on"><fieldset class="fs" id="fs">
 <div class="card" id="who"><div class="row two">
  <div><label for="name">Your name</label><input id="name" name="name" type="text" maxlength="20" autocomplete="nickname" autocapitalize="words" placeholder="e.g. Maria R" aria-describedby="name-help name-err" required>
   <div class="small hrow"><span id="name-help">This is how you'll show up on the board. Up to 20 characters.</span><span class="cnt" id="name-cnt" aria-hidden="true">0/20</span></div>
@@ -156,7 +156,7 @@ html.theme-thanksgiving form[data-locked] .submit,html.theme-thanksgiving form[d
  <div class="coderow"><input id="code" type="text" maxlength="8" placeholder="CODE" autocomplete="off" autocapitalize="characters" aria-label="Edit code" aria-describedby="code-help code-err">
  <button type="button" class="btn2" id="load">Load my picks</button></div><div class="ferr" id="code-err" hidden></div><div class="okline" id="code-ok" hidden></div></details>
 </div>
-<h2>Your picks</h2><p class="hint">Tap the team you think wins. All picks lock at Thursday kickoff (Thu 5:15 PM PT): every game, Monday's pick and the tiebreaker.</p>
+<h2>Your picks</h2><p class="hint">Tap the team you think wins. Every game and the tiebreaker stay open until the week is locked from the admin panel.</p>
 <div class="games" id="games"><div class="game" data-m="CAR @ GB" data-i="1"><div class="gtop"><span><span class="when">Thu 10/29 5:15PM PT</span></span><span class="st"></span></div><div class="teams" role="group" aria-label="CAR @ GB pick" aria-describedby="gerr-1"><button type="button" class="team" data-m="CAR @ GB" data-t="Carolina" aria-pressed="false" aria-label="Carolina"><b>CAR</b><small>Carolina</small></button><span class="at">@</span><button type="button" class="team" data-m="CAR @ GB" data-t="Green Bay" aria-pressed="false" aria-label="Green Bay"><b>GB</b><small>Green Bay</small></button></div><div class="gerr" id="gerr-1" hidden>⚠ Pick a team for this game</div></div>
 <div class="game" data-m="BAL @ BUF" data-i="2"><div class="gtop"><span><span class="when">Sun 11/1 10:00AM PT</span></span><span class="st"></span></div><div class="teams" role="group" aria-label="BAL @ BUF pick" aria-describedby="gerr-2"><button type="button" class="team" data-m="BAL @ BUF" data-t="Baltimore" aria-pressed="false" aria-label="Baltimore"><b>BAL</b><small>Baltimore</small></button><span class="at">@</span><button type="button" class="team" data-m="BAL @ BUF" data-t="Buffalo" aria-pressed="false" aria-label="Buffalo"><b>BUF</b><small>Buffalo</small></button></div><div class="gerr" id="gerr-2" hidden>⚠ Pick a team for this game</div></div>
 <div class="game" data-m="TEN @ CIN" data-i="3"><div class="gtop"><span><span class="when">Sun 11/1 10:00AM PT</span></span><span class="st"></span></div><div class="teams" role="group" aria-label="TEN @ CIN pick" aria-describedby="gerr-3"><button type="button" class="team" data-m="TEN @ CIN" data-t="Tennessee" aria-pressed="false" aria-label="Tennessee"><b>TEN</b><small>Tennessee</small></button><span class="at">@</span><button type="button" class="team" data-m="TEN @ CIN" data-t="Cincinnati" aria-pressed="false" aria-label="Cincinnati"><b>CIN</b><small>Cincinnati</small></button></div><div class="gerr" id="gerr-3" hidden>⚠ Pick a team for this game</div></div>
@@ -178,7 +178,7 @@ html.theme-thanksgiving form[data-locked] .submit,html.theme-thanksgiving form[d
  <span class="small" id="tbst"></span></div><div class="ferr" id="tb-err" hidden></div></div>
 <div id="msg" class="msg" role="status" aria-live="polite"></div>
 <div class="bar"><div class="prog"><b id="cnt">0</b> of <span id="tot">14</span> picked<div class="pbar"><i id="pb"></i></div></div>
-<button class="submit" id="go" type="submit" disabled>Picks locked</button></div>
+<button class="submit" id="go" type="submit" disabled>Submit picks</button></div>
 </fieldset></form>
 <datalist id="tags"><option value="Comish"><option value="Cool cats"><option value="Cool Cats"><option value="coolcats"><option value="Da UNC"><option value="Da Unc"><option value="DUUUVALLL"><option value="Fam Bash"><option value="Fam bash"><option value="FAM BASH"><option value="Fambash"><option value="Give Kirk Da Ball"><option value="Mario"><option value="ninos b"><option value="NINOS BONITOS"><option value="Niños Bonitos"><option value="RAAAAIIIDERSSSSSSS"><option value="SPIT"><option value="The OG"><option value="TheSnubnoseKilla"><option value="Yoyoyo"></datalist>
 </main>
@@ -193,16 +193,16 @@ let tbLock=D.lock_at, serverOpen=true, srvLocked=false, skew=0;   // skew = serv
 const now=()=>Date.now()+skew;
 const pt=new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',weekday:'short',hour:'numeric',minute:'2-digit'});
 function until(ms){const m=Math.round(ms/60000); if(m<60) return m+'m'; const h=Math.floor(m/60); if(h<48) return h+'h '+(m%60)+'m'; return Math.floor(h/24)+'d '+(h%24)+'h';}
-// ONE lock for everything: the first kickoff (D.lock_at). srvLocked = /api/games said locked, or a submit got CLOSED.
-const weekLocked=()=>srvLocked||now()>=Date.parse(D.lock_at);
-const isLocked=g=>!!(weekLocked()||now()>=Date.parse(g.lock_at)||g.locked_srv);   // boolean: classList.toggle(x,undefined) would FLIP (games hopped to 'already started' when /api/games was unreachable)
-const tbLocked=()=>weekLocked()||now()>=Date.parse(tbLock);
-const LOCKED_NOTE='<b>🔒 Pickems has started — picks are locked.</b> All Week '+W+' picks locked at '+D.lock_day+' kickoff ('+D.lock_label+'): every game, the Monday pick and the tiebreaker. <a class="tbtn" href="./">See the board →</a>';
+// Lock is admin-only. /api/games.locked or a CLOSED submit sets srvLocked.
+const weekLocked=()=>!!srvLocked;
+const isLocked=g=>!!(weekLocked()||g.locked_srv);
+const tbLocked=()=>weekLocked();
+const LOCKED_NOTE='<b>🔒 Picks are locked.</b> Week '+W+' submissions were closed from the admin panel. <a class="tbtn" href="./">See the board →</a>';
 let state={}; try{state=JSON.parse(localStorage.getItem(LS)||'{}')}catch(_e){}
 state.picks=state.picks||{};
 const save=()=>{try{localStorage.setItem(LS,JSON.stringify(state))}catch(_e){}};
 const form=$('#f');
-if(form&&form.dataset.locked==='1') srvLocked=true;            // built after the lock: closed for good, whatever this device's clock says
+if(form&&form.dataset.locked==='1') srvLocked=true;
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cardOf=m=>$$('.game').find(el=>el.dataset.m===m);
 // ---- inline errors: message under the field / card, aria-invalid + aria-describedby, first one focused ----
@@ -402,14 +402,13 @@ if(form){
     (s.games||[]).forEach(g=>{ if(byM[g.matchup]){ byM[g.matchup].lock_at=g.lock_at; byM[g.matchup].locked_srv=!!g.locked; } });
     if(s.tiebreaker_lock_at) tbLock=s.tiebreaker_lock_at;
     if(s.tiebreaker_locked) tbLock=new Date(0).toISOString();
-    serverOpen=!!s.open; if(s.locked===true) srvLocked=true;
-    if(s.lock_at){ D.lock_at=s.lock_at; tbLock=s.lock_at; schedule(); }
+    serverOpen=!!s.open;
+    if(s.locked===true) srvLocked=true;
+    else if(s.locked===false) srvLocked=false;
+    if(s.lock_at){ D.lock_at=s.lock_at; tbLock=s.lock_at; }
     paint();
   }).catch(()=>{}).then(()=>refreshSaved());   // after the server clock/lock is known
 }
-// flip to closed exactly at the lock (plus the 20 s repaint as a backstop)
-let lockTimer=null;
-function schedule(){ if(lockTimer) clearTimeout(lockTimer); const ms=Date.parse(D.lock_at)-now(); if(ms>0&&ms<2147483647) lockTimer=setTimeout(paint,ms+250); }
-schedule(); paint(); setInterval(paint,20000);
+paint(); setInterval(paint,20000);
 })();
 </script></body></html>

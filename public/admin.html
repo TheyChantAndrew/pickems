@@ -101,6 +101,15 @@ body{font-family:-apple-system,system-ui,Segoe UI,Roboto,sans-serif;margin:0;bac
 .adm-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom));max-width:calc(100vw - 24px);
  background:#14532d;border:1px solid #22c55e;color:#f0fdf4;border-radius:12px;padding:10px 14px;font-size:14.5px;font-weight:700;box-shadow:0 6px 20px #000a;z-index:5}
 .adm-toast[hidden]{display:none}
+
+.adm-lock{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#2a1a12;border:1px solid #9a3412;border-radius:12px;padding:10px 12px;margin:0 0 12px}
+.adm-lock.is-locked{background:#7c2d12;border-color:#fb923c}
+.adm-lock.is-open{background:#14532d;border-color:#22c55e}
+.adm-lock .adm-lock-copy{min-width:0}
+.adm-lock .k{font-size:12px;font-weight:700;color:#fdba74;text-transform:uppercase;letter-spacing:.6px}
+.adm-lock.is-open .k{color:#86efac}
+.adm-lock .v{font-size:18px;font-weight:800;margin-top:2px}
+.adm-lock .s{font-size:12.5px;color:#ffedd5;margin-top:3px;line-height:1.35}
 @media (min-width:760px){
  .adm-title{font-size:25px} .adm-main{padding:18px}
  .adm-totals{grid-template-columns:repeat(4,1fr)}
@@ -120,6 +129,18 @@ body{font-family:-apple-system,system-ui,Segoe UI,Roboto,sans-serif;margin:0;bac
     <div class="adm-tile is-collected"><div class="k">Collected</div><div class="v" id="adm-collected">–</div></div>
     <div class="adm-tile is-owes"><div class="k">Still owed</div><div class="v" id="adm-owed">–</div></div>
     <div class="adm-owes" id="adm-owes" aria-live="polite">Loading…</div>
+  </section>
+  <section id="adm-lock" class="adm-lock" aria-label="Picks lock">
+    <div class="adm-lock-copy">
+      <div class="k">Submissions</div>
+      <div class="v" id="adm-lock-v">–</div>
+      <div class="s" id="adm-lock-s">Lock and unlock from here. Thursday kickoff no longer closes the form.</div>
+    </div>
+    <div class="adm-ctl">
+      <label class="adm-toggle"><input type="checkbox" class="adm-cb" id="adm-lock-cb" role="switch" aria-label="Lock picks for this week"><span class="adm-track"><span class="adm-knob"></span></span></label>
+      <span class="adm-lbl" id="adm-lock-lbl">–</span>
+      <span class="adm-state" id="adm-lock-state" aria-live="polite"></span>
+    </div>
   </section>
   <ul id="adm-list" class="adm-list" aria-label="Entries"></ul>
   <p class="adm-foot">Tap a switch to mark paid. It saves right away and the public board catches up within a minute.

@@ -17,7 +17,7 @@
   var token = (/(?:^|[#&])k=([^&]+)/.exec(location.hash || "") || [])[1] || "";
   try { token = decodeURIComponent(token); } catch (e) { token = ""; }
   var $ = function (id) { return document.getElementById(id); };
-  var state = {week: null, fee: 10, live: false, rows: [], paper: [], pending: 0, loadSeq: 0, del: null};
+  var state = {week: null, fee: 10, live: false, locked: null, rows: [], paper: [], pending: 0, loadSeq: 0, del: null};
 
   function nameKey(n) { return String(n == null ? "" : n).trim().toLowerCase().replace(/\s+/g, " "); }
   function slug(s) { return String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, ""); }
@@ -48,6 +48,38 @@
   }
 
   // ---- totals: every entry (DB + paper) counts toward the pot; collected = fee x paid ----
+
+  function paintLock() {
+    var box = $("adm-lock"), cb = $("adm-lock-cb");
+    if (!box || !cb) return;
+    var locked = !!state.locked;
+    box.classList.toggle("is-locked", locked);
+    box.classList.toggle("is-open", state.locked === false);
+    cb.checked = locked;
+    $("adm-lock-v").textContent = state.locked == null ? "–" : (locked ? "LOCKED" : "OPEN");
+    $("adm-lock-lbl").textContent = locked ? "LOCKED" : "OPEN";
+    $("adm-lock-s").textContent = locked
+      ? "Players cannot submit or edit picks until you unlock."
+      : "Players can submit and edit picks. Flip the switch to lock the week.";
+  }
+  function saveLock(want) {
+    var cb = $("adm-lock-cb"), st = $("adm-lock-state");
+    var seq = (state.lockSeq = (state.lockSeq || 0) + 1);
+    cb.disabled = true; st.className = "adm-state is-saving"; st.textContent = "Saving…"; state.pending++;
+    api("POST", "/api/admin/paid", {week: state.week, lock: want}).then(function (j) {
+      if (seq !== state.lockSeq) return;
+      state.locked = !!j.picks_locked;
+      paintLock(); st.className = "adm-state is-saved"; st.textContent = "Saved ✓";
+      setTimeout(function () { if (seq === state.lockSeq) { st.className = "adm-state"; st.textContent = ""; } }, 4000);
+    }, function (e) {
+      if (seq !== state.lockSeq) return;
+      paintLock();
+      st.className = "adm-state is-error";
+      st.textContent = e.status === 401 ? "Link not valid" : e.status === 429 ? "Too many tries, wait" : "Couldn't save";
+      if (e.status === 401 || e.status === 429) msg(e.message);
+    }).then(function () { if (seq === state.lockSeq) cb.disabled = false; state.pending--; });
+  }
+
   function totals() {
     var all = state.rows.concat(state.paper), fee = state.fee;
     var paid = all.filter(function (r) { return r.paid; }), owe = all.filter(function (r) { return !r.paid; });
@@ -289,7 +321,7 @@
       var j = res[0], b = res[1];
       if (seq !== state.loadSeq) return;
       if (!week) return load(j.week);                // first load: the server picks the current week
-      state.week = j.week; state.fee = Number(j.fee || 10); state.live = !!j.paid_live; state.del = j.delete_state || null;
+      state.week = j.week; state.fee = Number(j.fee || 10); state.live = !!j.paid_live; state.del = j.delete_state || null; state.locked = !!j.picks_locked; paintLock();
       var players = (b && String(b.week) === String(j.week) && b.players) || [];
       var byEntry = {}, byKey = {}, byName = {};
       players.forEach(function (p) { if (p.entry != null) byEntry[nameKey(p.entry)] = p; byKey[p.key] = p; byName[nameKey(p.name)] = p; });
@@ -325,6 +357,7 @@
   }
 
   $("adm-week").addEventListener("change", function () { load(Number(this.value)); });
+  if ($("adm-lock-cb")) $("adm-lock-cb").addEventListener("change", function () { saveLock(this.checked); });
   $("adm-refresh").addEventListener("click", function () { if (!state.pending && !dlg.open && !vdlg.open) load(state.week); });
   document.addEventListener("visibilitychange", function () {
     if (document.visibilityState === "visible" && state.week && !state.pending && !dlg.open && !vdlg.open) load(state.week);

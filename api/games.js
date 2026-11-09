@@ -138,7 +138,7 @@ function buildStatus(wd, games, players, nowMs, currentWeek) {
   const gamesTotal = games.filter(g => !g.hidden).length;
   const leaders = players.filter(p => p.leader);
   const state = gamesFinal === gamesTotal && gamesTotal ? 'final' : games.some(g => g.status === 'live') ? 'live' : 'open';
-  const L = core.withLocks(wd, nowMs);
+  const L = core.withLocks(Object.assign({}, wd, {picks_locked: wd.picks_locked}), nowMs);
   const locked = L.locked;
   const submitOpen = wd.open !== false && wd.week === currentWeek && !locked;
   const text = {
@@ -161,7 +161,7 @@ function buildStatus(wd, games, players, nowMs, currentWeek) {
     sunday_final: !!wd.sunday_final,
     last_updated_iso: new Date(nowMs).toISOString(),
     submit_open: submitOpen, submit_url: '/submit',
-    lock_day: 'Thursday', submit_close_iso: L.lock_at,
+    lock_day: 'Admin', submit_close_iso: L.lock_at,
     picks_locked: locked,
     text
   };
@@ -175,6 +175,7 @@ async function board(req, res, q, nowMs) {
   const week = Number(q.week || cur);
   const wd = data.loadWeek(week);
   if (!wd) return send(res, 404, {ok: false, error: `Week ${week || '?'} is not set up yet.`, code: 'WEEK'});
+  wd.picks_locked = await core.getPicksLocked(db, week, wd, nowMs);
   const all = await core.readWithTombstones(db, week);
   const entries = core.publicEntries(all.entries, wd);
   const espn = await fetchEspnRaw(wd.year, week);
@@ -215,6 +216,7 @@ module.exports = handler(['GET'], async (req, res, _r, now) => {
   try { db = await getDb(); } catch (e) { db = null; }
   const cur = data.currentWeek(), week = Number(q.week || cur), wd = data.loadWeek(week);
   if (!wd) return send(res, 404, {ok: false, error: `Week ${week || '?'} is not set up yet.`, code: 'WEEK'});
+  wd.picks_locked = await core.getPicksLocked(db, week, wd, now);
   const n = db ? await core.countEntries(db, week) : null;
   send(res, 200, core.publicGames(wd, week, now, n, cur));
 }, {storage: false});

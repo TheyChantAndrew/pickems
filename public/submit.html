@@ -255,16 +255,17 @@ function paint(){
   if(form.getAttribute('data-locked')){
     form.removeAttribute('data-locked'); $('#fs').disabled=false;
     const eb=$('#editbox'); eb.classList.remove('off'); const su=eb.querySelector('summary'); su.removeAttribute('tabindex'); su.removeAttribute('aria-disabled');
-    $('#go').disabled=false; $('#go').textContent=state.code?'Update picks':'Submit picks'; $('#who').classList.remove('off'); topnote('','');
+    $('#who').classList.remove('off'); topnote('','');
   }
   const sig=all.map(el=>el.classList.contains('locked')?1:0).join('');
   if(sig!==groupSig){ groupSig=sig; all.forEach(el=>(el.classList.contains('locked')?LG:G).appendChild(el)); }
   LW.hidden=!locked; G.hidden=!open;
   $('#lockedsum').textContent=locked+' game'+(locked===1?'':'s')+' already started · picks locked';
   $('#cnt').textContent=n; $('#pb').style.width=(100*n/D.games.length)+'%';
-  const tb=$('#tb'), l=tbLocked(); tb.disabled=l||!serverOpen; $('#tbst').textContent=l?'🔒 Locked':'Locks '+pt.format(new Date(tbLock))+' PT';
+  const tb=$('#tb'), l=tbLocked(); tb.disabled=l||!serverOpen; $('#tbst').textContent=l?'🔒 Locked':'Locks '+pt.format(new Date(tbLock||D.lock_at||Date.now()))+' PT';
   const closed=!serverOpen||(!open&&!state.code);
-  if(closed){$('#go').disabled=true; $('#go').textContent=serverOpen?'All games locked':'Closed';}
+  $('#go').disabled=closed;
+  $('#go').textContent=closed?(serverOpen?'All games locked':'Closed'):(state.code?'Update picks':'Submit picks');
   ['name','tag','code','load'].forEach(k=>{const el=$('#'+k); if(el) el.disabled=closed;});
   $('#who').classList.toggle('off',closed);
   if(closed) topnote('closed','<b>🔒 Week '+W+' picks are closed.</b>'+(serverOpen?' Every game has kicked off, so new picks can\'t be added.':' Week '+W+' isn\'t taking online picks right now.')+' <a class="tbtn" href="./">See the board →</a>');
@@ -417,19 +418,26 @@ if(form){
     D.tiebreaker={matchup:s.tiebreaker_game||(tbGame&&tbGame.matchup), lock_at:s.tiebreaker_lock_at, label:tbGame&&tbGame.kickoff_label};
   }
   // Server is the judge of the current week and lock. Never keep a stale baked week.
-  fetch(D.apiBase+'/api/games',{cache:'no-store'}).then(r=>r.json()).then(s=>{
-    if(!s||!s.ok) return;
-    if(s.now) skew=Date.parse(s.now)-Date.now();
-    adoptWeek(s);
-    serverOpen=!!s.open;
-    if(s.locked===true) srvLocked=true;
-    else if(s.locked===false) srvLocked=false;
-    if(s.tiebreaker_lock_at) tbLock=s.tiebreaker_lock_at;
-    if(s.tiebreaker_locked) tbLock=new Date(0).toISOString();
-    if(s.lock_at) D.lock_at=s.lock_at;
-    paint();
-  }).catch(()=>{}).then(()=>refreshSaved());
+  function pullGames(){
+    return fetch(D.apiBase+'/api/games',{cache:'no-store'}).then(r=>r.json()).then(s=>{
+      if(!s||!s.ok) return;
+      if(s.now) skew=Date.parse(s.now)-Date.now();
+      const slate=(s.games||[]).map(g=>g.matchup).join('|');
+      const mine=D.games.map(g=>g.matchup).join('|');
+      if(s.week!==W || slate!==mine) adoptWeek(s);
+      else (s.games||[]).forEach(g=>{ const cur=byM[g.matchup]; if(cur){ cur.locked_srv=!!g.locked; if(g.lock_at) cur.lock_at=g.lock_at; } });
+      serverOpen=!!s.open;
+      if(s.locked===true) srvLocked=true;
+      else if(s.locked===false) srvLocked=false;
+      if(s.tiebreaker_lock_at) tbLock=s.tiebreaker_lock_at;
+      if(s.tiebreaker_locked) tbLock=new Date(0).toISOString();
+      if(s.lock_at) D.lock_at=s.lock_at;
+      paint();
+    }).catch(()=>{});
+  }
+  pullGames().then(()=>refreshSaved());
+  setInterval(pullGames,20000);
 }
-paint(); setInterval(paint,20000);
+paint();
 })();
 </script></body></html>

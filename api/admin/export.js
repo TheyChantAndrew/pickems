@@ -7,7 +7,7 @@ const core = require('../../lib/core');
 module.exports = handler(['GET'], async (req, res, db) => {
   const q = query(req);
   if (!tokenOk(requestToken(req, q, true))) return send(res, 401, {ok: false, error: 'Not authorized', code: 'AUTH'});
-  const week = Number(q.week || data.currentWeek()), wd = data.loadWeek(week);
+  const week = Number(q.week || await data.currentWeekAsync(db)), wd = await data.loadWeekAsync(db, week);
   if (!wd) return send(res, 404, {ok: false, error: `Week ${week || '?'} is not set up yet.`, code: 'WEEK'});
   send(res, 200, core.csv(await core.readAll(db, week), wd), {
     'Content-Type': 'text/csv; charset=utf-8',

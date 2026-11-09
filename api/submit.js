@@ -6,7 +6,7 @@ const core = require('../lib/core');
 module.exports = handler(['POST'], async (req, res, db, now) => {
   const b = await jsonBody(req);
   if (res._pkLog) res._pkLog.ctx = logCtx(b);
-  const cur = data.currentWeek();
-  const r = await core.submit(db, data.loadWeek(b.week), cur, b, now, ipHash(clientIp(req)));
+  const cur = await data.currentWeekAsync(db);
+  const r = await core.submit(db, await data.loadWeekAsync(db, b.week), cur, b, now, ipHash(clientIp(req)));
   send(res, 200, r);
 }, {route: 'submit'});

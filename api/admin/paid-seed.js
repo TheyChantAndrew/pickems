@@ -10,6 +10,6 @@ module.exports = handler(['POST'], async (req, res, db, now) => {
   await core.adminGate(db, requestToken(req, {}, false), tokenOk, ipHash(clientIp(req)), now);
   const b = await jsonBody(req);
   const week = Number(b.week);
-  if (!data.loadWeek(week)) return send(res, 404, {ok: false, error: `Week ${b.week || '?'} is not set up yet.`, code: 'WEEK'});
+  if (!await data.loadWeekAsync(db, week)) return send(res, 404, {ok: false, error: `Week ${b.week || '?'} is not set up yet.`, code: 'WEEK'});
   send(res, 200, await core.seedPaid(db, week, b.flags, b.force === true));
 }, {route: 'admin_paid_seed'});

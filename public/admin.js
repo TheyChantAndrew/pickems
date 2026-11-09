@@ -80,6 +80,41 @@
     }).then(function () { if (seq === state.lockSeq) cb.disabled = false; state.pending--; });
   }
 
+  function paintWeekTools(j) {
+    var s = $("adm-weektools-s"), espn = $("adm-espn"), live = $("adm-livewk");
+    if (!s) return;
+    var n = Number(j.games_count || 0), cur = j.current_week;
+    if (j.missing || !n) s.textContent = "No games stored for Week " + state.week + " yet. Load them from ESPN.";
+    else if (state.week === cur) s.textContent = n + " games loaded. This is the live week on the site.";
+    else s.textContent = n + " games loaded. The live week is still Week " + cur + ".";
+    if (espn) espn.disabled = false;
+    if (live) live.disabled = !n;
+  }
+  function loadEspn() {
+    var espn = $("adm-espn"), live = $("adm-livewk"), s = $("adm-weektools-s");
+    espn.disabled = true; if (live) live.disabled = true; state.pending++;
+    s.textContent = "Loading Week " + state.week + " from ESPN…";
+    api("POST", "/api/admin/paid", {week: state.week, load_espn: true}).then(function (j) {
+      s.textContent = "Loaded " + j.games_count + " games. Tap “Make this the live week” if that is the slate you want.";
+      toast("Loaded Week " + j.week + " · " + j.games_count + " games.");
+      load(state.week);
+    }, function (e) {
+      s.textContent = e.message || "Could not load ESPN.";
+      msg(e.message || "Could not load ESPN.");
+    }).then(function () { espn.disabled = false; state.pending--; });
+  }
+  function makeLive() {
+    var live = $("adm-livewk");
+    live.disabled = true; state.pending++;
+    api("POST", "/api/admin/paid", {week: state.week, make_current: true}).then(function (j) {
+      toast("Week " + j.current_week + " is now the live week.");
+      load(state.week);
+    }, function (e) {
+      msg(e.message || "Could not set the live week.");
+      live.disabled = false;
+    }).then(function () { state.pending--; });
+  }
+
   function totals() {
     var all = state.rows.concat(state.paper), fee = state.fee;
     var paid = all.filter(function (r) { return r.paid; }), owe = all.filter(function (r) { return !r.paid; });
@@ -321,12 +356,12 @@
       var j = res[0], b = res[1];
       if (seq !== state.loadSeq) return;
       if (!week) return load(j.week);                // first load: the server picks the current week
-      state.week = j.week; state.fee = Number(j.fee || 10); state.live = !!j.paid_live; state.del = j.delete_state || null; state.locked = !!j.picks_locked; paintLock();
+      state.week = j.week; state.fee = Number(j.fee || 10); state.live = !!j.paid_live; state.del = j.delete_state || null; state.locked = !!j.picks_locked; paintLock(); paintWeekTools(j);
       var players = (b && String(b.week) === String(j.week) && b.players) || [];
       var byEntry = {}, byKey = {}, byName = {};
       players.forEach(function (p) { if (p.entry != null) byEntry[nameKey(p.entry)] = p; byKey[p.key] = p; byName[nameKey(p.name)] = p; });
       var used = {};
-      state.rows = j.entries.map(function (en) {
+      state.rows = (j.entries || []).map(function (en) {
         var p = byEntry[nameKey(en.name)] || byKey[playerKey(en.name, en.tag)] || byName[nameKey(en.name)];
         if (p) used[p.key] = 1;
         return {name: en.name, key: p ? p.key : playerKey(en.name, en.tag), label: p && p.name ? p.name : en.name,
@@ -358,6 +393,8 @@
 
   $("adm-week").addEventListener("change", function () { load(Number(this.value)); });
   if ($("adm-lock-cb")) $("adm-lock-cb").addEventListener("change", function () { saveLock(this.checked); });
+  if ($("adm-espn")) $("adm-espn").addEventListener("click", function () { if (!state.pending) loadEspn(); });
+  if ($("adm-livewk")) $("adm-livewk").addEventListener("click", function () { if (!state.pending) makeLive(); });
   $("adm-refresh").addEventListener("click", function () { if (!state.pending && !dlg.open && !vdlg.open) load(state.week); });
   document.addEventListener("visibilitychange", function () {
     if (document.visibilityState === "visible" && state.week && !state.pending && !dlg.open && !vdlg.open) load(state.week);

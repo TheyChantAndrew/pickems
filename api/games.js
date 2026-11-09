@@ -171,9 +171,9 @@ async function board(req, res, q, nowMs) {
   let db = null;
   try { db = await getDb(); } catch (e) { db = null; }
   if (!db) return send(res, 503, {ok: false, error: 'Picks storage is not connected yet.', code: 'NO_STORAGE'});
-  const cur = data.currentWeek();
+  const cur = await data.currentWeekAsync(db);
   const week = Number(q.week || cur);
-  const wd = data.loadWeek(week);
+  const wd = await data.loadWeekAsync(db, week);
   if (!wd) return send(res, 404, {ok: false, error: `Week ${week || '?'} is not set up yet.`, code: 'WEEK'});
   wd.picks_locked = await core.getPicksLocked(db, week, wd, nowMs);
   const all = await core.readWithTombstones(db, week);
@@ -188,7 +188,9 @@ async function board(req, res, q, nowMs) {
 }
 
 async function live(req, res, q, nowMs) {
-  const week = Number(q.week || data.currentWeek()), wd = data.loadWeek(week);
+  let db = null;
+  try { db = await getDb(); } catch (e) { db = null; }
+  const week = Number(q.week || await data.currentWeekAsync(db)), wd = await data.loadWeekAsync(db, week);
   const year = Number(q.dates || (wd && wd.year) || new Date(nowMs).getFullYear());
   if (!wd || !Number.isInteger(week) || !Number.isInteger(year) || year < 2020 || year > 2100)
     return send(res, 404, {ok: false, error: 'Week is not set up.', code: 'WEEK'});
@@ -214,7 +216,7 @@ module.exports = handler(['GET'], async (req, res, _r, now) => {
   if (q.live === '1') return live(req, res, q, now);
   let db = null;
   try { db = await getDb(); } catch (e) { db = null; }
-  const cur = data.currentWeek(), week = Number(q.week || cur), wd = data.loadWeek(week);
+  const cur = await data.currentWeekAsync(db), week = Number(q.week || cur), wd = await data.loadWeekAsync(db, week);
   if (!wd) return send(res, 404, {ok: false, error: `Week ${week || '?'} is not set up yet.`, code: 'WEEK'});
   wd.picks_locked = await core.getPicksLocked(db, week, wd, now);
   const n = db ? await core.countEntries(db, week) : null;

@@ -10,7 +10,7 @@ module.exports = handler(['POST'], async (req, res, db) => {
   if (!tokenOk(requestToken(req, {}, false))) return send(res, 401, {ok: false, error: 'Not authorized', code: 'AUTH'});
   const b = await jsonBody(req);
   const week = Number(b.week);
-  const wd = data.loadWeek(week);
+  const wd = await data.loadWeekAsync(db, week);
   if (!wd) return send(res, 404, {ok: false, error: `Week ${b.week || '?'} is not set up yet.`, code: 'WEEK'});
   send(res, 200, await core.deleteEntry(db, week, b.name, b.clear_rate_limits === true, wd));
 });

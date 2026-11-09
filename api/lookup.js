@@ -6,5 +6,5 @@ const core = require('../lib/core');
 module.exports = handler(['POST'], async (req, res, db, now) => {
   const b = await jsonBody(req);
   if (res._pkLog) res._pkLog.ctx = logCtx(b);
-  send(res, 200, await core.lookup(db, data.loadWeek(b.week), b, now, ipHash(clientIp(req))));
+  send(res, 200, await core.lookup(db, await data.loadWeekAsync(db, b.week), b, now, ipHash(clientIp(req))));
 }, {route: 'lookup'});

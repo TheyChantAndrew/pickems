@@ -7,7 +7,7 @@ const core = require('../../lib/core');
 module.exports = handler(['POST'], async (req, res, db, now) => {
   if (!tokenOk(requestToken(req, {}, false))) return send(res, 401, {ok: false, error: 'Not authorized', code: 'AUTH'});
   const b = await jsonBody(req);
-  const week = Number(b.week || data.currentWeek());
-  if (!data.loadWeek(week)) return send(res, 404, {ok: false, error: `Week ${week || '?'} is not set up yet.`, code: 'WEEK'});
+  const week = Number(b.week || await data.currentWeekAsync(db));
+  if (!await data.loadWeekAsync(db, week)) return send(res, 404, {ok: false, error: `Week ${week || '?'} is not set up yet.`, code: 'WEEK'});
   send(res, 200, await core.resetCode(db, week, b.name, now));
 });

@@ -102,6 +102,13 @@ body{font-family:-apple-system,system-ui,Segoe UI,Roboto,sans-serif;margin:0;bac
  background:#14532d;border:1px solid #22c55e;color:#f0fdf4;border-radius:12px;padding:10px 14px;font-size:14.5px;font-weight:700;box-shadow:0 6px 20px #000a;z-index:5}
 .adm-toast[hidden]{display:none}
 
+.adm-weektools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:#24162e;border:1px solid #3d2a4a;border-radius:12px;padding:10px 12px;margin:0 0 12px}
+.adm-weektools .k{font-size:12px;font-weight:700;color:#fdba74;text-transform:uppercase;letter-spacing:.6px;width:100%}
+.adm-weektools .s{font-size:12.5px;color:#d6c4a8;line-height:1.35;flex:1 1 180px}
+.adm-weektools button{font:inherit;font-size:13px;font-weight:800;min-height:44px;padding:0 12px;border-radius:10px;cursor:pointer;touch-action:manipulation}
+.adm-espn{border:1px solid #f59e0b;background:transparent;color:#fdba74}
+.adm-livewk{border:1px solid #22c55e;background:#14532d;color:#f0fdf4}
+.adm-weektools button:disabled{opacity:.55;cursor:progress}
 .adm-lock{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#2a1a12;border:1px solid #9a3412;border-radius:12px;padding:10px 12px;margin:0 0 12px}
 .adm-lock.is-locked{background:#7c2d12;border-color:#fb923c}
 .adm-lock.is-open{background:#14532d;border-color:#22c55e}
@@ -141,6 +148,12 @@ body{font-family:-apple-system,system-ui,Segoe UI,Roboto,sans-serif;margin:0;bac
       <span class="adm-lbl" id="adm-lock-lbl">–</span>
       <span class="adm-state" id="adm-lock-state" aria-live="polite"></span>
     </div>
+  </section>
+  <section id="adm-weektools" class="adm-weektools" aria-label="Week schedule">
+    <div class="k">This week’s games</div>
+    <div class="s" id="adm-weektools-s">Load the slate from ESPN, then make it the live week. No code change needed.</div>
+    <button type="button" class="adm-espn" id="adm-espn">Load games from ESPN</button>
+    <button type="button" class="adm-livewk" id="adm-livewk">Make this the live week</button>
   </section>
   <ul id="adm-list" class="adm-list" aria-label="Entries"></ul>
   <p class="adm-foot">Tap a switch to mark paid. It saves right away and the public board catches up within a minute.

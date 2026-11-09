@@ -11,7 +11,7 @@ module.exports = handler(['POST'], async (req, res, db, now) => {
   const token = requestToken(req, {}, false);
   await core.adminGate(db, token, paidTokenOk, ipHash(clientIp(req)), now);
   const b = await jsonBody(req);
-  const week = Number(b.week), wd = data.loadWeek(week);
+  const week = Number(b.week), wd = await data.loadWeekAsync(db, week);
   if (!wd) return send(res, 404, {ok: false, error: `Week ${b.week || '?'} is not set up yet.`, code: 'WEEK'}, H);
   const st = core.deleteState(wd, now);
   if (st.blocked) return send(res, 409, {ok: false, error: st.message, code: 'FINISHED', reason: st.reason}, H);

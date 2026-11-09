@@ -9,7 +9,7 @@ const core = require('../../lib/core');
 module.exports = handler(['GET', 'POST'], async (req, res, db, now) => {
   await core.adminGate(db, requestToken(req, {}, false), tokenOk, ipHash(clientIp(req)), now);
   if (req.method === 'GET') {
-    const week = Number(query(req).week || data.currentWeek());
+    const week = Number(query(req).week || await data.currentWeekAsync(db));
     return send(res, 200, {ok: true, week, deleted: await core.listDeleted(db, week)});
   }
   const b = await jsonBody(req);

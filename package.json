@@ -7,8 +7,5 @@
   },
   "dependencies": {
     "@libsql/client": "^0.18.0"
-  },
-  "scripts": {
-    "test": "node --test"
   }
 }

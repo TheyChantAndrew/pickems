@@ -151,6 +151,7 @@ test('board stays 200 for weeks 8, 9, and 10, reveals Monday, and hides it if ES
   const cur = await call(board, '/api/games?board=1');
   assert.equal(cur.status, 200);
   assert.equal(cur.body.week, 10);
+  assert.equal(cur.body.current_week, 10);
   const mon = cur.body.games.find(g => g.matchup === 'LAC @ BAL');
   assert.equal(mon.hidden, false);
   assert.equal(cur.body.players[0].picks['lac-bal'].text, 'BAL');

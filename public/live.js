@@ -9,6 +9,9 @@
   var timer = null, busy = false;
   // Weeks with no champion. Week 9: the site was down, so the only saved row is a void test entry.
   var BYE_WEEKS = {9: "BYE WEEK — the whole league was on bye"};
+  // Weeks 1–4 have Hall champions only. Turso has no slate (board returns 404).
+  var NO_BOARD = {1: true, 2: true, 3: true, 4: true};
+  var reqGen = 0;
   function weekFromLocation() {
     var m = /[?&]week=(\d+)/.exec(location.search);
     var n = m ? Number(m[1]) : 0;
@@ -269,6 +272,7 @@
       }
       if (b.current_week && wk !== b.current_week && card) card.setAttribute("data-submit", "closed");
     }
+    document.body.classList.remove("no-board");
     syncNav(b);
     ensureCta();
     rebuildStandings(b);
@@ -387,11 +391,15 @@
       picks.appendChild(tr2);
     }
     boardNote("");
+    document.body.classList.add("no-board");
+    var champ = $("#archive-name"), scoreEl = $("#archive-score");
+    if (champ) champ.textContent = name || "—";
+    if (scoreEl) scoreEl.textContent = score || "";
     syncNav(applied);
     var note = $("#week-note");
     if (note) {
       note.hidden = false;
-      note.textContent = "Full board not available for this week." + (name ? " Champion: " + name + "." : "");
+      note.textContent = "Full board not available for this week.";
     }
     if (pushNext) { writeUrl(applied); pushNext = false; }
   }
@@ -417,33 +425,40 @@
   }
 
   function refresh() {
+    if (NO_BOARD[viewing]) { showArchive(viewing); return; }
     if (busy) return;
     busy = true;
     var asked = viewing;
+    var gen = reqGen;
     var u = boardUrl() + (boardUrl().indexOf("?") < 0 ? "?" : "&") + "t=" + Date.now();
     fetch(u, {cache: "no-store"})
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (b) {
+        if (gen !== reqGen || NO_BOARD[viewing]) return;
+        if (asked && viewing !== asked) return;
         if (b && b.status && !b.degraded) {
           applied = b;
           if (!viewing) viewing = b.current_week || b.week;
           boardNote("");
           apply(b);
           if (pushNext) { writeUrl(b); pushNext = false; }
-        } else if (b && b.status && b.degraded && !applied) {
+        } else if (b && b.status && b.degraded && !(applied && !applied.archive)) {
           boardNote("Scores are incomplete. Refresh the page in a minute.");
           apply(b);
         } else if (asked && hallRowFor(asked)) {
           showArchive(asked);
         } else showProblem(asked);
       })
-      .catch(function () { showProblem(asked); pushNext = false; })
-      .then(function () { busy = false; });
+      .catch(function () { if (gen === reqGen && !NO_BOARD[viewing]) showProblem(asked); pushNext = false; })
+      .then(function () { if (gen === reqGen) busy = false; });
   }
   function go(week) {
-    if (busy || !week || week < 1 || week > 30) return;
+    if (!week || week < 1 || week > 30) return;
+    reqGen++;
+    busy = false;
     pushNext = true;
     viewing = week;
+    if (NO_BOARD[week]) { showArchive(week); return; }
     refresh();
   }
 

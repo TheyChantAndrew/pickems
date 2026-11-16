@@ -356,7 +356,7 @@
     var meta = $(".meta");
     if (meta && meta.childNodes[0] && meta.childNodes[0].nodeType === 3) meta.childNodes[0].textContent = "Week " + week + " · ";
     var eyebrow = $(".eyebrow span:last-child");
-    if (eyebrow) eyebrow.textContent = "Week " + week + " · detailed board not available";
+    if (eyebrow) eyebrow.textContent = "Week " + week + " · full board not available";
     var card = $("#status-card");
     if (card) { card.setAttribute("data-submit", "closed"); card.setAttribute("data-week", String(week)); }
     var picksHead = document.querySelector("#sec-picks thead tr");
@@ -371,7 +371,7 @@
       var td = document.createElement("td");
       td.colSpan = 5;
       td.style.cssText = "text-align:center;padding:18px;color:#d6c4a8";
-      td.textContent = name ? (name + " is in the Hall for this week. Game-by-game picks were not saved.") : "This week's board was not saved.";
+      td.textContent = name ? ("Champion: " + name + (score ? " · " + score : "")) : "Full board not available for this week.";
       tr.appendChild(td);
       stBody.appendChild(tr);
     }
@@ -382,15 +382,16 @@
       var td2 = document.createElement("td");
       td2.colSpan = 8;
       td2.style.cssText = "text-align:center;padding:18px;color:#d6c4a8";
-      td2.textContent = "Detailed picks aren't available for Week " + week + ".";
+      td2.textContent = "Full board not available for this week.";
       tr2.appendChild(td2);
       picks.appendChild(tr2);
     }
+    boardNote("");
     syncNav(applied);
     var note = $("#week-note");
     if (note) {
       note.hidden = false;
-      note.textContent = "Detailed board isn't available for Week " + week + "." + (name ? " Champion: " + name + (score ? " (" + score + ")." : ".") : " The slate was never saved.");
+      note.textContent = "Full board not available for this week." + (name ? " Champion: " + name + "." : "");
     }
     if (pushNext) { writeUrl(applied); pushNext = false; }
   }

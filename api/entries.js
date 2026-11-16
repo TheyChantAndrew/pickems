@@ -5,10 +5,17 @@ const {handler} = require('../lib/handler');
 const {send, query} = require('../lib/http');
 const data = require('../lib/data');
 const core = require('../lib/core');
+const schedule = require('../lib/schedule');
 module.exports = handler(['GET'], async (req, res, db) => {
-  const week = Number(query(req).week || await data.currentWeekAsync(db)), wd = await data.loadWeekAsync(db, week);
+  const week = Number(query(req).week || await data.currentWeekAsync(db));
+  const wd = await data.loadWeekAsync(db, week);
   if (!wd) return send(res, 404, {ok: false, error: `Week ${week || '?'} is not set up yet.`, code: 'WEEK'});
-  const all = await core.readWithTombstones(db, week), entries = core.publicEntries(all.entries, wd);
-  send(res, 200, {ok: true, week, sunday_final: !!wd.sunday_final, paid_live: await core.paidLive(db, week), count: entries.length, entries,
+  let view = wd;
+  try {
+    const espn = await schedule.fetchEspnScores(wd.year, week, 4000);
+    view = schedule.revealIfReady(wd, espn);
+  } catch (e) { view = wd; }
+  const all = await core.readWithTombstones(db, week), entries = core.publicEntries(all.entries, view);
+  send(res, 200, {ok: true, week, sunday_final: !!view.sunday_final, paid_live: await core.paidLive(db, week), count: entries.length, entries,
                   tombstones: all.tombstones});
 });

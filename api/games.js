@@ -6,6 +6,7 @@ const {handler} = require('../lib/handler');
 const {send, query} = require('../lib/http');
 const data = require('../lib/data');
 const core = require('../lib/core');
+const schedule = require('../lib/schedule');
 const {getDb} = require('../lib/db');
 const ESPN = process.env.ESPN_SCOREBOARD_URL || 'https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard';
 const FIX = {WSH: 'WAS', LA: 'LAR', JAC: 'JAX', OAK: 'LV', SD: 'LAC'};
@@ -46,8 +47,9 @@ function normClock(raw) {
   return per || (clk ? clk[1] : s.slice(0, 16));
 }
 
-async function fetchEspnRaw(year, week) {
-  const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 8000);
+async function fetchEspnRaw(year, week, timeoutMs) {
+  const ms = Math.min(8000, Math.max(500, Number(timeoutMs) || 8000));
+  const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), ms);
   try {
     const r = await fetch(`${ESPN}?dates=${year}&seasontype=2&week=${week}`, {signal: ctl.signal, headers: {Accept: 'application/json'}});
     if (!r.ok) return null;
@@ -76,7 +78,7 @@ function buildGames(wd, espn) {
     const pair = [g.away, g.home].sort().join('|');
     const e = espn && espn[pair];
     let status = 'pre', score = null, winner = null, clock = null;
-    if (e && e.sc[g.away] != null && e.sc[g.home] != null) {
+    if (e && e.sc && e.sc[g.away] != null && e.sc[g.home] != null) {
       const A = e.sc[g.away], H = e.sc[g.home];
       const line = g.away + ' ' + A + ' – ' + g.home + ' ' + H;
       if (e.state === 'post' && e.done) {
@@ -177,12 +179,24 @@ async function board(req, res, q, nowMs) {
   if (!wd) return send(res, 404, {ok: false, error: `Week ${week || '?'} is not set up yet.`, code: 'WEEK'});
   wd.picks_locked = await core.getPicksLocked(db, week, wd, nowMs);
   const all = await core.readWithTombstones(db, week);
-  const entries = core.publicEntries(all.entries, wd);
-  const espn = await fetchEspnRaw(wd.year, week);
-  const games = buildGames(wd, espn);
-  const abbr = abbrMap(wd);
-  const players = scorePlayers(entries, games, abbr, !!wd.sunday_final);
-  const status = buildStatus(wd, games, players, nowMs, cur);
+  // wd stays const. PR #1 reassigned it and threw "Assignment to constant variable", which 500'd every week.
+  function pack(view, scores) {
+    const entries = core.publicEntries(all.entries, view);
+    const games = buildGames(view, scores);
+    const abbr = abbrMap(view);
+    const players = scorePlayers(entries, games, abbr, !!view.sunday_final);
+    const status = buildStatus(view, games, players, nowMs, cur);
+    return {games, players, status, abbr};
+  }
+  let packed;
+  try {
+    const espn = await fetchEspnRaw(wd.year, week, 4000);
+    const view = schedule.revealIfReady(wd, espn);
+    packed = pack(view, espn);
+  } catch (e) {
+    packed = pack(wd, null);
+  }
+  const {games, players, status, abbr} = packed;
   const out = {version: 1, week, year: wd.year, status, games, players, fee: Number(wd.entry_fee || 10), abbr};
   send(res, 200, out, {'Cache-Control': 'public, max-age=0, s-maxage=15, stale-while-revalidate=30'});
 }

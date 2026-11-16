@@ -6,6 +6,7 @@ const {handler} = require('../lib/handler');
 const {send, query} = require('../lib/http');
 const data = require('../lib/data');
 const core = require('../lib/core');
+const schedule = require('../lib/schedule');
 const {getDb} = require('../lib/db');
 const ESPN = process.env.ESPN_SCOREBOARD_URL || 'https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard';
 const FIX = {WSH: 'WAS', LA: 'LAR', JAC: 'JAX', OAK: 'LV', SD: 'LAC'};
@@ -177,8 +178,9 @@ async function board(req, res, q, nowMs) {
   if (!wd) return send(res, 404, {ok: false, error: `Week ${week || '?'} is not set up yet.`, code: 'WEEK'});
   wd.picks_locked = await core.getPicksLocked(db, week, wd, nowMs);
   const all = await core.readWithTombstones(db, week);
-  const entries = core.publicEntries(all.entries, wd);
   const espn = await fetchEspnRaw(wd.year, week);
+  wd = schedule.withSundayFinal(wd, espn, nowMs);
+  const entries = core.publicEntries(all.entries, wd);
   const games = buildGames(wd, espn);
   const abbr = abbrMap(wd);
   const players = scorePlayers(entries, games, abbr, !!wd.sunday_final);

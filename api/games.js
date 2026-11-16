@@ -169,36 +169,55 @@ function buildStatus(wd, games, players, nowMs, currentWeek) {
   };
 }
 
+function degradedBoard(wd, week) {
+  const games = (wd.games || []).filter(g => g && g.away && g.home).map(g => ({
+    key: (g.away + '-' + g.home).toLowerCase(), matchup: g.matchup, away: g.away, home: g.home,
+    when: g.kickoff_label || '', hidden: !!(g.is_monday && !wd.sunday_final), status: 'pre',
+    score: null, winner: null, clock: null, is_monday: !!g.is_monday
+  }));
+  return {version: 1, week, year: wd.year, degraded: true,
+    status: {week, year: wd.year, state: 'open', sunday_final: !!wd.sunday_final, games_final: 0, games_total: games.length,
+      picks_locked: !!wd.picks_locked, submit_open: false, live_games: [], leaders: [], leaders_count: 0,
+      text: {entries: '0 entries', leader: '—', leader_short: '—', lock: '', pot: '', payout: '', updated: ''}},
+    games, players: [], fee: Number(wd.entry_fee || 10), abbr: {}};
+}
+
 async function board(req, res, q, nowMs) {
   let db = null;
   try { db = await getDb(); } catch (e) { db = null; }
   if (!db) return send(res, 503, {ok: false, error: 'Picks storage is not connected yet.', code: 'NO_STORAGE'});
-  const cur = await data.currentWeekAsync(db);
-  const week = Number(q.week || cur);
-  const wd = await data.loadWeekAsync(db, week);
-  if (!wd) return send(res, 404, {ok: false, error: `Week ${week || '?'} is not set up yet.`, code: 'WEEK'});
-  wd.picks_locked = await core.getPicksLocked(db, week, wd, nowMs);
-  const all = await core.readWithTombstones(db, week);
-  // wd stays const. PR #1 reassigned it and threw "Assignment to constant variable", which 500'd every week.
-  function pack(view, scores) {
-    const entries = core.publicEntries(all.entries, view);
-    const games = buildGames(view, scores);
-    const abbr = abbrMap(view);
-    const players = scorePlayers(entries, games, abbr, !!view.sunday_final);
-    const status = buildStatus(view, games, players, nowMs, cur);
-    return {games, players, status, abbr};
-  }
-  let packed;
+  let week = Number(q.week) || 0, wd = null;
   try {
-    const espn = await fetchEspnRaw(wd.year, week, 4000);
-    const view = schedule.revealIfReady(wd, espn);
-    packed = pack(view, espn);
+    const cur = await data.currentWeekAsync(db);
+    week = Number(q.week || cur);
+    wd = await data.loadWeekAsync(db, week);
+    if (!wd) return send(res, 404, {ok: false, error: `Week ${week || '?'} is not set up yet.`, code: 'WEEK'});
+    wd.picks_locked = await core.getPicksLocked(db, week, wd, nowMs);
+    const all = await core.readWithTombstones(db, week);
+    // Do not reassign wd. PR #1 did `wd = ...` on a const and 500'd every loaded week.
+    function pack(view, scores) {
+      const entries = core.publicEntries(all.entries, view);
+      const games = buildGames(view, scores);
+      const abbr = abbrMap(view);
+      const players = scorePlayers(entries, games, abbr, !!view.sunday_final);
+      const status = buildStatus(view, games, players, nowMs, cur);
+      return {games, players, status, abbr};
+    }
+    let packed;
+    try {
+      const espn = await fetchEspnRaw(wd.year, week, 4000);
+      packed = pack(schedule.revealIfReady(wd, espn), espn);
+    } catch (e) {
+      packed = pack(wd, null);
+    }
+    const {games, players, status, abbr} = packed;
+    send(res, 200, {version: 1, week, year: wd.year, status, games, players, fee: Number(wd.entry_fee || 10), abbr},
+      {'Cache-Control': 'public, max-age=0, s-maxage=15, stale-while-revalidate=30'});
   } catch (e) {
-    packed = pack(wd, null);
+    console.error(e);
+    if (wd) return send(res, 200, degradedBoard(wd, week), {'Cache-Control': 'no-store'});
+    return send(res, 500, {ok: false, error: 'Server error, please try again.', code: 'ERR'});
   }
-  const {games, players, status, abbr} = packed;
-  const out = {version: 1, week, year: wd.year, status, games, players, fee: Number(wd.entry_fee || 10), abbr};
-  send(res, 200, out, {'Cache-Control': 'public, max-age=0, s-maxage=15, stale-while-revalidate=30'});
 }
 
 async function live(req, res, q, nowMs) {

@@ -15,7 +15,12 @@ module.exports = handler(['GET'], async (req, res, db) => {
     const espn = await schedule.fetchEspnScores(wd.year, week, 4000);
     view = schedule.revealIfReady(wd, espn);
   } catch (e) { view = wd; }
-  const all = await core.readWithTombstones(db, week), entries = core.publicEntries(all.entries, view);
-  send(res, 200, {ok: true, week, sunday_final: !!view.sunday_final, paid_live: await core.paidLive(db, week), count: entries.length, entries,
-                  tombstones: all.tombstones});
+  try {
+    const all = await core.readWithTombstones(db, week), entries = core.publicEntries(all.entries, view);
+    send(res, 200, {ok: true, week, sunday_final: !!view.sunday_final, paid_live: await core.paidLive(db, week), count: entries.length, entries,
+                    tombstones: all.tombstones});
+  } catch (e) {
+    console.error(e);
+    send(res, 200, {ok: true, week, sunday_final: !!wd.sunday_final, paid_live: false, count: 0, entries: [], tombstones: [], degraded: true});
+  }
 });

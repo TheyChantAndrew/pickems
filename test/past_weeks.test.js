@@ -14,4 +14,6 @@ test('Week 9 is a bye in the viewer, and a failed refresh does not invent an emp
   assert.match(html, /id="week-prev"/);
   assert.match(html, /id="week-next"/);
   assert.match(live, /weekFromLocation/);
+  assert.match(live, /Detailed board isn't available for Week /);
+  assert.match(live, /hallRowFor/);
 });

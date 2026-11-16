@@ -307,9 +307,10 @@
     if (label && wk) label.textContent = BYE_WEEKS[wk] ? ("Week " + wk + " · BYE") : ("Week " + wk);
     var prev = $("#week-prev"), next = $("#week-next");
     if (prev) prev.disabled = !(wk > 1);
-    if (next) next.disabled = !(cur && wk < cur);
+    if (next) next.disabled = cur ? !(wk < cur) : !(wk < 30);
     var note = $("#week-note");
     if (!note) return;
+    if (b && b.archive) return;
     if (wk && BYE_WEEKS[wk]) { note.hidden = false; note.textContent = BYE_WEEKS[wk] + " (site outage). No champion."; }
     else if (cur && wk && wk !== cur) { note.hidden = false; note.textContent = "Past results. Picks are closed."; }
     else note.hidden = true;
@@ -320,9 +321,78 @@
     return u;
   }
   function writeUrl(b) {
-    var cur = b.current_week || b.week;
-    var want = b.week === cur ? location.pathname : (location.pathname + "?week=" + b.week);
+    var cur = b.current_week;
+    var want = (cur && b.week === cur) ? location.pathname : (location.pathname + "?week=" + b.week);
     if (location.pathname + location.search !== want) history.pushState({week: b.week}, "", want);
+  }
+  function hallRowFor(week) {
+    var hall = $(".hall table");
+    if (!hall) return null;
+    var marked = hall.querySelector("[data-wk=\"" + week + "\"]");
+    if (marked && !marked.getAttribute("data-bye")) return marked;
+    var rows = hall.querySelectorAll("tr");
+    for (var i = 0; i < rows.length; i++) {
+      var cell = rows[i].querySelector(".wk");
+      if (cell && String(cell.textContent).replace(/\D/g, "") === String(week)) return rows[i];
+    }
+    return null;
+  }
+  function showArchive(week) {
+    var cur = (applied && applied.current_week) || null;
+    viewing = week;
+    applied = {week: week, current_week: cur, archive: true, status: {week: week}};
+    var row = hallRowFor(week);
+    var name = row && row.querySelector(".nm") ? row.querySelector(".nm").textContent : "";
+    var score = "";
+    if (row) {
+      var nums = row.querySelectorAll(".num");
+      if (nums[0]) {
+        var main = nums[0].childNodes[0] ? String(nums[0].childNodes[0].textContent || "").trim() : "";
+        var extra = nums[0].querySelector(".hnote");
+        score = main + (extra ? " " + extra.textContent.trim() : "");
+      }
+    }
+    document.title = "Fam Bash Pickems · Week " + week;
+    var meta = $(".meta");
+    if (meta && meta.childNodes[0] && meta.childNodes[0].nodeType === 3) meta.childNodes[0].textContent = "Week " + week + " · ";
+    var eyebrow = $(".eyebrow span:last-child");
+    if (eyebrow) eyebrow.textContent = "Week " + week + " · detailed board not available";
+    var card = $("#status-card");
+    if (card) { card.setAttribute("data-submit", "closed"); card.setAttribute("data-week", String(week)); }
+    var picksHead = document.querySelector("#sec-picks thead tr");
+    if (picksHead) {
+      var firstTh = picksHead.querySelector("th:not([data-game])");
+      while (picksHead.lastChild && picksHead.lastChild !== firstTh) picksHead.removeChild(picksHead.lastChild);
+    }
+    var stBody = document.querySelector("#standings tbody");
+    if (stBody) {
+      clearRows(stBody);
+      var tr = document.createElement("tr");
+      var td = document.createElement("td");
+      td.colSpan = 5;
+      td.style.cssText = "text-align:center;padding:18px;color:#d6c4a8";
+      td.textContent = name ? (name + " is in the Hall for this week. Game-by-game picks were not saved.") : "This week's board was not saved.";
+      tr.appendChild(td);
+      stBody.appendChild(tr);
+    }
+    var picks = document.querySelector("#sec-picks tbody");
+    if (picks) {
+      clearRows(picks);
+      var tr2 = document.createElement("tr");
+      var td2 = document.createElement("td");
+      td2.colSpan = 8;
+      td2.style.cssText = "text-align:center;padding:18px;color:#d6c4a8";
+      td2.textContent = "Detailed picks aren't available for Week " + week + ".";
+      tr2.appendChild(td2);
+      picks.appendChild(tr2);
+    }
+    syncNav(applied);
+    var note = $("#week-note");
+    if (note) {
+      note.hidden = false;
+      note.textContent = "Detailed board isn't available for Week " + week + "." + (name ? " Champion: " + name + (score ? " (" + score + ")." : ".") : " The slate was never saved.");
+    }
+    if (pushNext) { writeUrl(applied); pushNext = false; }
   }
   function boardNote(text) {
     var n = document.getElementById("board-error");
@@ -362,6 +432,8 @@
         } else if (b && b.status && b.degraded && !applied) {
           boardNote("Scores are incomplete. Refresh the page in a minute.");
           apply(b);
+        } else if (asked && hallRowFor(asked)) {
+          showArchive(asked);
         } else showProblem(asked);
       })
       .catch(function () { showProblem(asked); pushNext = false; })

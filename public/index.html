@@ -195,6 +195,18 @@ tr.lead td.pick-win{background:#15803d} tr.lead td.pick-loss{background:#3a1420}
 .hall tr.tot td{background:#3b2416;font-weight:700;text-align:right;border-bottom:none} .hall tr.tot td.cash{text-align:center;font-size:15px}
 .prevwk{display:block;margin:10px 0 0;padding:10px 14px;border-radius:12px;background:#24162e;border:1px solid #f59e0b88;color:#fde68a;text-decoration:none;font-size:14.5px;line-height:1.35}
 .prevwk:hover,.prevwk:focus-visible{border-color:#f59e0b;background:#2e1c3a;outline:none}
+.weeknav{display:flex;align-items:center;gap:8px;margin:12px 0 0}
+.weeknav button{min-height:44px;padding:0 14px;border-radius:999px;border:1px solid #3d2a4a;background:#24162e;color:#fdba74;font:800 14px -apple-system,system-ui,Segoe UI,Roboto,sans-serif;cursor:pointer}
+.weeknav button:disabled{opacity:.4;cursor:default}
+.weeknav button:hover:not(:disabled),.weeknav button:focus-visible{background:#3b2416;border-color:#f59e0b;outline:none}
+.weeknav .wklabel{flex:1;text-align:center;font-weight:800;font-size:15px}
+.weeknote{margin:8px 0 0;font-size:13.5px;color:#fde68a;line-height:1.35}
+.weeknote[hidden]{display:none}
+.archive-champ{display:none;margin:14px 0 0;padding:16px;border-radius:12px;background:#24162e;border:1px solid #f59e0b88;text-align:center}
+.archive-champ b{display:block;font-size:20px;margin-top:4px}
+.archive-champ span{color:#fdba74;font-weight:700}
+body.no-board #status-card,body.no-board .jump,body.no-board .grid{display:none}
+body.no-board .archive-champ{display:block}
 .hype{padding:10px 14px;font-size:14px;text-align:center;color:#fde68a;background:#3b2416;border-top:1px dashed #f59e0b}
 .promo{display:block;margin:10px 0 0;padding:9px 12px;border:1px dashed #f59e0b;border-radius:10px;color:#fde68a;text-decoration:none;font-size:13px;text-align:center;min-height:44px}
 .pkm{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;padding:12px}.pkm[hidden]{display:none}.pkm-box{position:relative;width:min(92vw,800px)}.pkm-v{position:relative;padding-top:56.25%;background:#000;border-radius:10px;overflow:hidden}.pkm-v iframe{position:absolute;inset:0;width:100%;height:100%;border:0}.pkm-x{position:absolute;top:-44px;right:0;width:40px;height:40px;border-radius:50%;border:1px solid #f59e0b;background:#1a120c;color:#fde68a;font-size:20px;cursor:pointer} .promo u{color:#fdba74} .promo:hover,.promo:focus-visible{background:#2a1a12}
@@ -248,6 +260,11 @@ html.theme-thanksgiving .hall{border-color:#d9a21b;background:linear-gradient(18
 html.theme-thanksgiving .hall tr.tot td,html.theme-thanksgiving .hype{background:#40260f} html.theme-thanksgiving .hype{border-top-color:#d9a21b}
 html.theme-thanksgiving .xw{background:#a63a12}
 html.theme-thanksgiving .prevwk{background:#2b1a10;border-color:#d9a21b88} html.theme-thanksgiving .prevwk:hover,html.theme-thanksgiving .prevwk:focus-visible{background:#3a2414;border-color:#d9a21b}
+html.theme-thanksgiving .weeknav button{background:#2b1a10;border-color:#4d3320;color:#f2c14e}
+html.theme-thanksgiving .weeknav button:hover:not(:disabled),html.theme-thanksgiving .weeknav button:focus-visible{background:#40260f;border-color:#d9a21b}
+html.theme-thanksgiving .weeknote{color:#f6e7cc}
+html.theme-thanksgiving .archive-champ{background:#2b1a10;border-color:#d9a21b88}
+html.theme-thanksgiving .archive-champ span{color:#f2c14e}
 html.theme-thanksgiving #standings tr.void td.who{color:#b8a48c}
 /* the green "Make your picks" button stays green (complement of the oranges/browns, so it pops); pulse, open-only gate and reduced-motion untouched */
 </style>
@@ -257,7 +274,9 @@ html.theme-thanksgiving #standings tr.void td.who{color:#b8a48c}
 <header><div class="wrap"><h1><span class="ti-halloween">🎃</span><span class="ti-thanksgiving">🦃</span> Fam Bash Pickems</h1>
 <div class="meta">Week 9 · 2026<span class="br"></span><span data-hook="updated">Updated Mon 5:55 PM PT</span></div></div></header>
 <main class="wrap">
-<a class="prevwk" href="/week8">🏁 Week 8 final: <b>Mario</b> won $100 · see the final board →</a>
+<nav class="weeknav" id="weeknav" aria-label="Choose a week"><button type="button" id="week-prev">← Prev</button><span class="wklabel" id="week-now">Week</span><button type="button" id="week-next">Next →</button></nav>
+<p class="weeknote" id="week-note" hidden></p>
+<div class="archive-champ" id="archive-champ"><span>Champion</span><b id="archive-name"></b><small id="archive-score"></small></div>
 <section id="status-card" class="status" data-state="live" data-week="8" data-locked="false" data-submit="closed" data-picks="locked" data-submit-close="2026-10-29T17:15:00-07:00" aria-label="Week 9 status">
 <div class="eyebrow"><span class="pill" aria-hidden="true"></span><span>Week 9 · <span data-hook="games-final">13</span> of 14 final</span></div>
 <div class="bigline">

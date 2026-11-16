@@ -186,9 +186,10 @@ async function board(req, res, q, nowMs) {
   let db = null;
   try { db = await getDb(); } catch (e) { db = null; }
   if (!db) return send(res, 503, {ok: false, error: 'Picks storage is not connected yet.', code: 'NO_STORAGE'});
-  let week = Number(q.week) || 0, wd = null;
+  let week = Number(q.week) || 0, wd = null, currentWeek = null;
   try {
-    const cur = await data.currentWeekAsync(db);
+    currentWeek = await data.currentWeekAsync(db);
+    const cur = currentWeek;
     week = Number(q.week || cur);
     wd = await data.loadWeekAsync(db, week);
     if (!wd) return send(res, 404, {ok: false, error: `Week ${week || '?'} is not set up yet.`, code: 'WEEK'});
@@ -211,11 +212,15 @@ async function board(req, res, q, nowMs) {
       packed = pack(wd, null);
     }
     const {games, players, status, abbr} = packed;
-    send(res, 200, {version: 1, week, year: wd.year, status, games, players, fee: Number(wd.entry_fee || 10), abbr},
+    send(res, 200, {version: 1, week, year: wd.year, current_week: currentWeek, status, games, players, fee: Number(wd.entry_fee || 10), abbr},
       {'Cache-Control': 'public, max-age=0, s-maxage=15, stale-while-revalidate=30'});
   } catch (e) {
     console.error(e);
-    if (wd) return send(res, 200, degradedBoard(wd, week), {'Cache-Control': 'no-store'});
+    if (wd) {
+      const body = degradedBoard(wd, week);
+      body.current_week = currentWeek;
+      return send(res, 200, body, {'Cache-Control': 'no-store'});
+    }
     return send(res, 500, {ok: false, error: 'Server error, please try again.', code: 'ERR'});
   }
 }

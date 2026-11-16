@@ -7,6 +7,19 @@
   var URL_ = cfg.url || "/api/games?board=1";
   var EVERY = cfg.interval || 60000;
   var timer = null, busy = false;
+  // Weeks with no champion. Week 9: the site was down, so the only saved row is a void test entry.
+  var BYE_WEEKS = {9: "BYE WEEK — the whole league was on bye"};
+  // Weeks 1–4 have Hall champions only. Turso has no slate (board returns 404).
+  var NO_BOARD = {1: true, 2: true, 3: true, 4: true};
+  var reqGen = 0;
+  function weekFromLocation() {
+    var m = /[?&]week=(\d+)/.exec(location.search);
+    var n = m ? Number(m[1]) : 0;
+    return n >= 1 && n <= 30 ? n : 0;
+  }
+  var viewing = weekFromLocation();
+  var applied = null;
+  var pushNext = false;
 
   function $(sel, root) { return (root || document).querySelector(sel); }
   function $$(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
@@ -252,34 +265,144 @@
         var gt = (st.games_total != null ? st.games_total : 0);
         eyebrow.innerHTML = "Week " + wk + " · <span data-hook=\"games-final\">" + gf + "</span> of " + gt + " final";
       }
-      var prev = $(".prevwk");
-      if (prev && wk > 1) {
-        prev.href = "/week" + (wk - 1);
-        prev.innerHTML = "🏁 Week " + (wk - 1) + " final: see the board →";
-      }
       var hype = $(".hype");
-      if (hype) hype.innerHTML = "👀 Your name could be next. Week " + wk + " champ gets <b>$" + (st.payout || 0) + "</b>. Who\'s taking it? 💰";
+      if (hype) {
+        if (BYE_WEEKS[wk]) hype.textContent = BYE_WEEKS[wk] + ". No champion and no payout.";
+        else hype.innerHTML = "👀 Your name could be next. Week " + wk + " champ gets <b>$" + (st.payout || 0) + "</b>. Who\'s taking it? 💰";
+      }
+      if (b.current_week && wk !== b.current_week && card) card.setAttribute("data-submit", "closed");
     }
-    // ---- Hall of Champions: ensure Week 8 winner is present ----
-    var hall = $(".hall table");
-    if (hall && !hall.querySelector("[data-wk=\"8\"]")) {
-      var tbody = hall.querySelector("tbody") || hall;
-      var row = document.createElement("tr");
-      row.setAttribute("data-wk", "8");
-      row.innerHTML = "<td class=\"wk\">Wk 8</td><td class=\"who\" title=\"Mario (Niños Bonitos)\"><span class=\"hrow\"><span class=\"cup\" aria-hidden=\"true\">🏆</span><b class=\"nm\">Mario</b></span><span class=\"tag\">Niños Bonitos</span></td><td class=\"num\">12/14<span class=\"hnote\">won TB (41 vs 28)</span></td><td class=\"num cash\">$100<span class=\"dim\">10 entries</span></td>";
-      var firstData = hall.querySelector("tr:not(:first-child)");
-      if (firstData && firstData.parentNode) firstData.parentNode.insertBefore(row, firstData);
-      else hall.appendChild(row);
-      var tot = hall.querySelector("tr.tot .cash");
-      if (tot) tot.textContent = "$830";
-    }
+    document.body.classList.remove("no-board");
+    syncNav(b);
     ensureCta();
     rebuildStandings(b);
     rebuildPicks(b);
+    try { ensureHall(b); } catch (e) { /* a hall glitch must not freeze the board */ }
     try { document.dispatchEvent(new CustomEvent("pickems:board", {detail: b})); } catch (e) {}
   }
 
-  var lastGood = null;
+  function ensureHall() {
+    var hall = $(".hall table");
+    if (!hall) return;
+    if (!hall.querySelector("[data-wk=\"8\"]")) {
+      var row = document.createElement("tr");
+      row.setAttribute("data-wk", "8");
+      row.innerHTML = "<td class=\"wk\">Wk 8</td><td class=\"who\" title=\"Mario (Niños Bonitos)\"><span class=\"hrow\"><span class=\"cup\" aria-hidden=\"true\">🏆</span><b class=\"nm\">Mario</b></span><span class=\"tag\">Niños Bonitos</span></td><td class=\"num\">12/14<span class=\"hnote\">won TB (41 vs 28)</span></td><td class=\"num cash\">$100<span class=\"dim\">10 entries</span></td>";
+      var firstData = hall.querySelector("tbody tr") || hall.querySelector("tr:not(:first-child)");
+      if (firstData && firstData.parentNode) firstData.parentNode.insertBefore(row, firstData);
+      else (hall.querySelector("tbody") || hall).appendChild(row);
+      var tot = hall.querySelector("tr.tot .cash");
+      if (tot) tot.textContent = "$830";
+    }
+    Object.keys(BYE_WEEKS).forEach(function (wk) {
+      if (hall.querySelector("[data-wk=\"" + wk + "\"]")) return;
+      var row = document.createElement("tr");
+      row.setAttribute("data-wk", wk);
+      row.setAttribute("data-bye", "1");
+      row.innerHTML = "<td class=\"wk\">Wk " + wk + "</td><td class=\"who\" title=\"Bye week\"><span class=\"hrow\"><span class=\"cup\" aria-hidden=\"true\">🏈</span><b class=\"nm\">BYE WEEK</b></span><span class=\"tag\">the whole league was on bye</span></td><td class=\"num\">—<span class=\"hnote\">site outage</span></td><td class=\"num\">—<span class=\"dim\">no payout</span></td>";
+      var first = hall.querySelector("tr[data-wk]");
+      if (first && first.parentNode) first.parentNode.insertBefore(row, first);
+      else (hall.querySelector("tbody") || hall).appendChild(row);
+    });
+  }
+  function syncNav(b) {
+    var wk = b && b.week, cur = b && (b.current_week || b.week);
+    var label = $("#week-now");
+    if (label && wk) label.textContent = BYE_WEEKS[wk] ? ("Week " + wk + " · BYE") : ("Week " + wk);
+    var prev = $("#week-prev"), next = $("#week-next");
+    if (prev) prev.disabled = !(wk > 1);
+    if (next) next.disabled = cur ? !(wk < cur) : !(wk < 30);
+    var note = $("#week-note");
+    if (!note) return;
+    if (b && b.archive) return;
+    if (wk && BYE_WEEKS[wk]) { note.hidden = false; note.textContent = BYE_WEEKS[wk] + " (site outage). No champion."; }
+    else if (cur && wk && wk !== cur) { note.hidden = false; note.textContent = "Past results. Picks are closed."; }
+    else note.hidden = true;
+  }
+  function boardUrl() {
+    var u = URL_;
+    if (viewing) u += (u.indexOf("?") < 0 ? "?" : "&") + "week=" + viewing;
+    return u;
+  }
+  function writeUrl(b) {
+    var cur = b.current_week;
+    var want = (cur && b.week === cur) ? location.pathname : (location.pathname + "?week=" + b.week);
+    if (location.pathname + location.search !== want) history.pushState({week: b.week}, "", want);
+  }
+  function hallRowFor(week) {
+    var hall = $(".hall table");
+    if (!hall) return null;
+    var marked = hall.querySelector("[data-wk=\"" + week + "\"]");
+    if (marked && !marked.getAttribute("data-bye")) return marked;
+    var rows = hall.querySelectorAll("tr");
+    for (var i = 0; i < rows.length; i++) {
+      var cell = rows[i].querySelector(".wk");
+      if (cell && String(cell.textContent).replace(/\D/g, "") === String(week)) return rows[i];
+    }
+    return null;
+  }
+  function showArchive(week) {
+    var cur = (applied && applied.current_week) || null;
+    viewing = week;
+    applied = {week: week, current_week: cur, archive: true, status: {week: week}};
+    var row = hallRowFor(week);
+    var name = row && row.querySelector(".nm") ? row.querySelector(".nm").textContent : "";
+    var score = "";
+    if (row) {
+      var nums = row.querySelectorAll(".num");
+      if (nums[0]) {
+        var main = nums[0].childNodes[0] ? String(nums[0].childNodes[0].textContent || "").trim() : "";
+        var extra = nums[0].querySelector(".hnote");
+        score = main + (extra ? " " + extra.textContent.trim() : "");
+      }
+    }
+    document.title = "Fam Bash Pickems · Week " + week;
+    var meta = $(".meta");
+    if (meta && meta.childNodes[0] && meta.childNodes[0].nodeType === 3) meta.childNodes[0].textContent = "Week " + week + " · ";
+    var eyebrow = $(".eyebrow span:last-child");
+    if (eyebrow) eyebrow.textContent = "Week " + week + " · full board not available";
+    var card = $("#status-card");
+    if (card) { card.setAttribute("data-submit", "closed"); card.setAttribute("data-week", String(week)); }
+    var picksHead = document.querySelector("#sec-picks thead tr");
+    if (picksHead) {
+      var firstTh = picksHead.querySelector("th:not([data-game])");
+      while (picksHead.lastChild && picksHead.lastChild !== firstTh) picksHead.removeChild(picksHead.lastChild);
+    }
+    var stBody = document.querySelector("#standings tbody");
+    if (stBody) {
+      clearRows(stBody);
+      var tr = document.createElement("tr");
+      var td = document.createElement("td");
+      td.colSpan = 5;
+      td.style.cssText = "text-align:center;padding:18px;color:#d6c4a8";
+      td.textContent = name ? ("Champion: " + name + (score ? " · " + score : "")) : "Full board not available for this week.";
+      tr.appendChild(td);
+      stBody.appendChild(tr);
+    }
+    var picks = document.querySelector("#sec-picks tbody");
+    if (picks) {
+      clearRows(picks);
+      var tr2 = document.createElement("tr");
+      var td2 = document.createElement("td");
+      td2.colSpan = 8;
+      td2.style.cssText = "text-align:center;padding:18px;color:#d6c4a8";
+      td2.textContent = "Full board not available for this week.";
+      tr2.appendChild(td2);
+      picks.appendChild(tr2);
+    }
+    boardNote("");
+    document.body.classList.add("no-board");
+    var champ = $("#archive-name"), scoreEl = $("#archive-score");
+    if (champ) champ.textContent = name || "—";
+    if (scoreEl) scoreEl.textContent = score || "";
+    syncNav(applied);
+    var note = $("#week-note");
+    if (note) {
+      note.hidden = false;
+      note.textContent = "Full board not available for this week.";
+    }
+    if (pushNext) { writeUrl(applied); pushNext = false; }
+  }
   function boardNote(text) {
     var n = document.getElementById("board-error");
     if (!text) { if (n) n.hidden = true; return; }
@@ -295,26 +418,68 @@
     n.textContent = text;
     n.hidden = false;
   }
-  function showProblem() {
-    boardNote(lastGood ? "Scores did not refresh. Showing the last update." : "The board did not load. Refresh the page in a minute.");
+  function showProblem(asked) {
+    var same = applied && (!asked || applied.week === asked);
+    if (asked && applied && applied.week !== asked) viewing = applied.week;
+    boardNote(asked && !same ? ("Week " + asked + " isn't available. Still showing Week " + applied.week + ".") : (same ? "Scores did not refresh. Showing the last update." : "The board did not load. Refresh the page in a minute."));
   }
 
   function refresh() {
+    if (NO_BOARD[viewing]) { showArchive(viewing); return; }
     if (busy) return;
     busy = true;
-    var u = URL_ + (URL_.indexOf("?") < 0 ? "?" : "&") + "t=" + Date.now();
+    var asked = viewing;
+    var gen = reqGen;
+    var u = boardUrl() + (boardUrl().indexOf("?") < 0 ? "?" : "&") + "t=" + Date.now();
     fetch(u, {cache: "no-store"})
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (b) {
-        if (b && b.status && !b.degraded) { lastGood = b; boardNote(""); apply(b); }
-        else if (b && b.status && b.degraded && !lastGood) { boardNote("Scores are incomplete. Refresh the page in a minute."); apply(b); }
-        else showProblem();
+        if (gen !== reqGen || NO_BOARD[viewing]) return;
+        if (asked && viewing !== asked) return;
+        if (b && b.status && !b.degraded) {
+          applied = b;
+          if (!viewing) viewing = b.current_week || b.week;
+          boardNote("");
+          apply(b);
+          if (pushNext) { writeUrl(b); pushNext = false; }
+        } else if (b && b.status && b.degraded && !(applied && !applied.archive)) {
+          boardNote("Scores are incomplete. Refresh the page in a minute.");
+          apply(b);
+        } else if (asked && hallRowFor(asked)) {
+          showArchive(asked);
+        } else showProblem(asked);
       })
-      .catch(function () { showProblem(); })
-      .then(function () { busy = false; });
+      .catch(function () { if (gen === reqGen && !NO_BOARD[viewing]) showProblem(asked); pushNext = false; })
+      .then(function () { if (gen === reqGen) busy = false; });
+  }
+  function go(week) {
+    if (!week || week < 1 || week > 30) return;
+    reqGen++;
+    busy = false;
+    pushNext = true;
+    viewing = week;
+    if (NO_BOARD[week]) { showArchive(week); return; }
+    refresh();
   }
 
+  function bindNav() {
+    var prev = $("#week-prev"), next = $("#week-next");
+    if (prev) prev.addEventListener("click", function () {
+      var w = (applied && applied.week) || viewing;
+      if (w > 1) go(w - 1);
+    });
+    if (next) next.addEventListener("click", function () {
+      var w = (applied && applied.week) || viewing;
+      var cur = applied && applied.current_week;
+      if (cur && w < cur) go(w + 1);
+    });
+    window.addEventListener("popstate", function () {
+      viewing = weekFromLocation();
+      refresh();
+    });
+  }
   function start() { if (timer) clearInterval(timer); timer = setInterval(refresh, EVERY); }
+  bindNav();
   document.addEventListener("visibilitychange", function () {
     if (document.visibilityState === "visible") { refresh(); start(); }
   });

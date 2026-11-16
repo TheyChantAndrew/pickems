@@ -279,21 +279,24 @@
     try { document.dispatchEvent(new CustomEvent("pickems:board", {detail: b})); } catch (e) {}
   }
 
-  function showEmpty() {
-    // Force empty state when API fails so static old players don't remain
-    var emptyBoard = {
-      status: { state: "open", week: 9, submit_open: false, picks_locked: true, games_final: 0, games_total: 0, text: { lock: "All picks locked", entries: "0 entries", leader: "—", leader_short: "—" } },
-      players: [],
-      games: [],
-      week: 9,
-      year: 2026
-    };
-    apply(emptyBoard);
-    var card = $("#status-card");
-    if (card) {
-      card.setAttribute("data-submit", "closed");
-      card.setAttribute("data-picks", "locked");
+  var lastGood = null;
+  function boardNote(text) {
+    var n = document.getElementById("board-error");
+    if (!text) { if (n) n.hidden = true; return; }
+    if (!n) {
+      n = document.createElement("div");
+      n.id = "board-error";
+      n.setAttribute("role", "status");
+      n.style.cssText = "margin:10px 0;padding:10px 12px;border-radius:10px;background:#3b2416;border:1px solid #f59e0b;color:#fde68a;font-size:14px";
+      var card = $("#status-card");
+      if (card && card.parentNode) card.parentNode.insertBefore(n, card);
+      else document.body.appendChild(n);
     }
+    n.textContent = text;
+    n.hidden = false;
+  }
+  function showProblem() {
+    boardNote(lastGood ? "Scores did not refresh. Showing the last update." : "The board did not load. Refresh the page in a minute.");
   }
 
   function refresh() {
@@ -303,10 +306,11 @@
     fetch(u, {cache: "no-store"})
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (b) {
-        if (b && b.status) apply(b);
-        else showEmpty();
+        if (b && b.status && !b.degraded) { lastGood = b; boardNote(""); apply(b); }
+        else if (b && b.status && b.degraded && !lastGood) { boardNote("Scores are incomplete. Refresh the page in a minute."); apply(b); }
+        else showProblem();
       })
-      .catch(function () { showEmpty(); })
+      .catch(function () { showProblem(); })
       .then(function () { busy = false; });
   }
 

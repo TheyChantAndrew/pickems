@@ -14,6 +14,38 @@ const weeks = {
       {matchup: 'PIT @ CIN', away: 'PIT', home: 'CIN', away_team: 'Steelers', home_team: 'Bengals', kickoff: '2026-11-16T01:20:00Z', kickoff_label: 'Sun 11/15 5:20PM PT', is_monday: false},
       {matchup: 'LAC @ BAL', away: 'LAC', home: 'BAL', away_team: 'Chargers', home_team: 'Ravens', kickoff: '2026-11-17T01:15:00Z', kickoff_label: 'Mon 11/16 5:15PM PT', is_monday: true}
     ]
+  }),
+  12: JSON.stringify({
+    week: 12, year: 2026, sunday_final: false,
+    games: [
+      {matchup: 'GB @ CHI', away: 'GB', home: 'CHI', away_team: 'GB', home_team: 'CHI', kickoff: '2026-11-26T21:00:00Z', kickoff_label: 'Thu', is_monday: false},
+      {matchup: 'BUF @ DEN', away: 'BUF', home: 'DEN', away_team: 'BUF', home_team: 'DEN', kickoff: '2026-11-28T21:30:00Z', kickoff_label: 'Sat', is_monday: false},
+      {matchup: 'NE @ DET', away: 'NE', home: 'DET', away_team: 'NE', home_team: 'DET', kickoff: '2026-11-29T14:30:00Z', kickoff_label: 'Sun', is_monday: false}
+    ]
+  }),
+  13: JSON.stringify({
+    week: 13, year: 2026, sunday_final: false,
+    games: [
+      {matchup: 'KC @ ATL', away: 'KC', home: 'ATL', away_team: 'KC', home_team: 'ATL', kickoff: '2026-12-06T18:00:00Z', kickoff_label: 'Sun', is_monday: false},
+      {matchup: 'DAL @ PHI', away: 'DAL', home: 'PHI', away_team: 'DAL', home_team: 'PHI', kickoff: '2026-12-07T21:00:00Z', kickoff_label: 'Mon', is_monday: true},
+      {matchup: 'LAC @ BAL', away: 'LAC', home: 'BAL', away_team: 'LAC', home_team: 'BAL', kickoff: '2026-12-08T01:15:00Z', kickoff_label: 'Mon', is_monday: true}
+    ]
+  }),
+  14: JSON.stringify({
+    week: 14, year: 2026, sunday_final: false,
+    games: [
+      {matchup: 'GB @ CHI', away: 'GB', home: 'CHI', away_team: 'GB', home_team: 'CHI', kickoff: '2026-11-26T17:30:00Z', kickoff_label: 'Thu', is_monday: false},
+      {matchup: 'DAL @ DET', away: 'DAL', home: 'DET', away_team: 'DAL', home_team: 'DET', kickoff: '2026-11-27T21:30:00Z', kickoff_label: 'Fri', is_monday: false},
+      {matchup: 'HOU @ LAR', away: 'HOU', home: 'LAR', away_team: 'HOU', home_team: 'LAR', kickoff: '2026-11-28T21:00:00Z', kickoff_label: 'Sat', is_monday: false},
+      {matchup: 'NE @ NYJ', away: 'NE', home: 'NYJ', away_team: 'NE', home_team: 'NYJ', kickoff: '2026-11-29T18:00:00Z', kickoff_label: 'Sun', is_monday: false},
+      {matchup: 'CIN @ WAS', away: 'CIN', home: 'WAS', away_team: 'CIN', home_team: 'WAS', kickoff: '2026-11-30T01:15:00Z', kickoff_label: 'Mon', is_monday: true}
+    ]
+  }),
+  15: JSON.stringify({
+    week: 15, year: 2026, sunday_final: false,
+    games: [
+      {matchup: 'SEA @ SF', away: 'SEA', home: 'SF', away_team: 'SEA', home_team: 'SF', kickoff: 'not-a-date', kickoff_label: 'Sun', is_monday: false}
+    ]
   })
 };
 const parsed = Object.fromEntries(Object.entries(weeks).map(([k, v]) => [k, JSON.parse(v)]));
@@ -27,7 +59,7 @@ function entry(week) {
     void: 0, void_at: null, source: 'web', notes: '', version: 1,
     created_at: '2026-11-10T00:00:00Z', updated_at: '2026-11-10T00:00:00Z'};
 }
-const entries = [8, 9, 10].map(entry);
+const entries = [8, 9, 10, 12, 13, 14, 15].map(entry);
 
 const db = {
   async execute(q) {
@@ -96,6 +128,14 @@ test('reveal shows every Monday game only after the earlier slate is final', () 
   assert.equal(revealIfReady(forced, null), forced);
   const boom = new Proxy({}, {get() { throw new Error('bad scoreboard'); }});
   assert.equal(revealIfReady(wd, boom), wd);
+  const saturday = {sunday_final: false, games: [
+    {matchup: 'BUF @ DEN', away: 'BUF', home: 'DEN', is_monday: false},
+    {matchup: 'DAL @ PHI', away: 'DAL', home: 'PHI', is_monday: true}
+  ]};
+  assert.equal(revealIfReady(saturday, {'BUF|DEN': {state: 'pre', done: false}}).sunday_final, false);
+  assert.equal(revealIfReady(saturday, {'BUF|DEN': {state: 'post', done: true}}).sunday_final, true);
+  const noMonday = {sunday_final: false, games: [{matchup: 'GB @ CHI', away: 'GB', home: 'CHI', is_monday: false}]};
+  assert.equal(revealIfReady(noMonday, {'CHI|GB': {state: 'post', done: true}}).sunday_final, true);
 });
 
 test('board stays 200 for weeks 8, 9, and 10, reveals Monday, and hides it if ESPN fails', async () => {
@@ -131,4 +171,38 @@ test('board stays 200 for weeks 8, 9, and 10, reveals Monday, and hides it if ES
   assert.equal(pubDown.status, 200);
   assert.equal(pubDown.body.sunday_final, false);
   assert.equal(pubDown.body.entries[0].picks['LAC @ BAL'], undefined);
+
+  const missing = await call(board, '/api/games?board=1&week=11');
+  assert.equal(missing.status, 404);
+  assert.equal(missing.body.code, 'WEEK');
+
+  fetchMode = '12';
+  const none = await call(board, '/api/games?board=1&week=12');
+  assert.equal(none.status, 200);
+  assert.equal(none.body.games.filter(g => g.is_monday).length, 0);
+  assert.ok(none.body.players.length >= 1);
+
+  fetchMode = '13';
+  const two = await call(board, '/api/games?board=1&week=13');
+  assert.equal(two.status, 200);
+  const mons = two.body.games.filter(g => g.is_monday);
+  assert.deepEqual(mons.map(g => g.matchup), ['DAL @ PHI', 'LAC @ BAL']);
+  assert.equal(mons.every(g => g.hidden === false), true);
+  assert.equal(two.body.players[0].picks['dal-phi'].text, 'PHI');
+  assert.equal(two.body.players[0].picks['lac-bal'].text, 'BAL');
+
+  fetchMode = '14';
+  const feast = await call(board, '/api/games?board=1&week=14');
+  assert.equal(feast.status, 200);
+  const feastMon = feast.body.games.filter(g => g.is_monday);
+  assert.equal(feastMon.length, 1);
+  assert.equal(feastMon[0].hidden, false);
+  assert.equal(feast.body.games.filter(g => !g.is_monday).length, 4);
+
+  fetchMode = '15';
+  const bad = await call(board, '/api/games?board=1&week=15');
+  assert.equal(bad.status, 200, JSON.stringify(bad.body));
+  assert.equal(bad.body.degraded, true);
+  assert.equal(bad.body.week, 15);
+  assert.notEqual(bad.body.code, 'ERR');
 });

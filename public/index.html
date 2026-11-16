@@ -106,7 +106,7 @@ section[id]{scroll-margin-top:64px}
 .rk{width:46px;color:#fdba74;font-weight:700} tr[data-leader=true] .rk .rkt::before{content:"👑";font-size:12px;margin-right:2px}
 .sc b{font-size:18px} .of{font-size:12px;color:#d6c4a8}
 .pdc{width:84px;text-align:right!important;padding-right:12px!important} .paid{color:#86efac;font-size:12.5px} .owe{background:#9a3412;color:#ffedd5;border-radius:999px;padding:3px 9px;font-size:12px;font-weight:700}
-tr.lead td{background:#3b2416}
+tr.lead td:not([class*="pick-"]){background:#3b2416}
 /* red pulse on unpaid entries (tr.unpaid; build_site renders it, live.js + the listener toggle it from the paid flag).
    Inset shadows only, so no layout shift and nothing for the cards' overflow:hidden / the grid's scroller to clip.
    Standings: the whole row (a soft red band top + bottom on every cell, left/right edges on the first/last cell). Picks
@@ -233,7 +233,7 @@ html.theme-thanksgiving .jump{background:#1c1009ee;border-bottom-color:#4d3320}
 html.theme-thanksgiving .jump a{background:#2b1a10;border-color:#4d3320;color:#f2c14e}
 html.theme-thanksgiving .jump a:hover,html.theme-thanksgiving .jump a:focus-visible{background:#40260f;border-color:#d9a21b}
 @media (min-width:900px){html.theme-thanksgiving .jump{background:none;border:0}}
-html.theme-thanksgiving tr.lead td{background:#40260f}
+html.theme-thanksgiving tr.lead td:not([class*="pick-"]){background:#40260f}
 html.theme-thanksgiving .picks td.who{background:#2b1a10;box-shadow:2px 0 0 #4d3320} html.theme-thanksgiving .picks th.who{background:#a4400f;box-shadow:2px 0 0 #4d3320}
 html.theme-thanksgiving .picks tr.lead td.who{background:#40260f}
 html.theme-thanksgiving .picks tr.unpaid td.who{box-shadow:2px 0 0 #4d3320,inset 0 0 0 1px rgba(248,113,113,.45),inset 0 0 10px rgba(239,68,68,.28);animation-name:unpaid-pulse-who-tg}

@@ -270,29 +270,26 @@
       if (b.current_week && wk !== b.current_week && card) card.setAttribute("data-submit", "closed");
     }
     syncNav(b);
-    // ---- Hall of Champions: ensure Week 8 winner is present ----
-    var hall = $(".hall table");
-    if (hall && !hall.querySelector("[data-wk=\"8\"]")) {
-      var tbody = hall.querySelector("tbody") || hall;
-      var row = document.createElement("tr");
-      row.setAttribute("data-wk", "8");
-      row.innerHTML = "<td class=\"wk\">Wk 8</td><td class=\"who\" title=\"Mario (Niños Bonitos)\"><span class=\"hrow\"><span class=\"cup\" aria-hidden=\"true\">🏆</span><b class=\"nm\">Mario</b></span><span class=\"tag\">Niños Bonitos</span></td><td class=\"num\">12/14<span class=\"hnote\">won TB (41 vs 28)</span></td><td class=\"num cash\">$100<span class=\"dim\">10 entries</span></td>";
-      var firstData = hall.querySelector("tr:not(:first-child)");
-      if (firstData && firstData.parentNode) firstData.parentNode.insertBefore(row, firstData);
-      else hall.appendChild(row);
-      var tot = hall.querySelector("tr.tot .cash");
-      if (tot) tot.textContent = "$830";
-    }
-    ensureByeRows();
     ensureCta();
     rebuildStandings(b);
     rebuildPicks(b);
+    try { ensureHall(b); } catch (e) { /* a hall glitch must not freeze the board */ }
     try { document.dispatchEvent(new CustomEvent("pickems:board", {detail: b})); } catch (e) {}
   }
 
-  function ensureByeRows() {
+  function ensureHall() {
     var hall = $(".hall table");
     if (!hall) return;
+    if (!hall.querySelector("[data-wk=\"8\"]")) {
+      var row = document.createElement("tr");
+      row.setAttribute("data-wk", "8");
+      row.innerHTML = "<td class=\"wk\">Wk 8</td><td class=\"who\" title=\"Mario (Niños Bonitos)\"><span class=\"hrow\"><span class=\"cup\" aria-hidden=\"true\">🏆</span><b class=\"nm\">Mario</b></span><span class=\"tag\">Niños Bonitos</span></td><td class=\"num\">12/14<span class=\"hnote\">won TB (41 vs 28)</span></td><td class=\"num cash\">$100<span class=\"dim\">10 entries</span></td>";
+      var firstData = hall.querySelector("tbody tr") || hall.querySelector("tr:not(:first-child)");
+      if (firstData && firstData.parentNode) firstData.parentNode.insertBefore(row, firstData);
+      else (hall.querySelector("tbody") || hall).appendChild(row);
+      var tot = hall.querySelector("tr.tot .cash");
+      if (tot) tot.textContent = "$830";
+    }
     Object.keys(BYE_WEEKS).forEach(function (wk) {
       if (hall.querySelector("[data-wk=\"" + wk + "\"]")) return;
       var row = document.createElement("tr");
@@ -300,8 +297,8 @@
       row.setAttribute("data-bye", "1");
       row.innerHTML = "<td class=\"wk\">Wk " + wk + "</td><td class=\"who\" title=\"Bye week\"><span class=\"hrow\"><span class=\"cup\" aria-hidden=\"true\">🏈</span><b class=\"nm\">BYE WEEK</b></span><span class=\"tag\">the whole league was on bye</span></td><td class=\"num\">—<span class=\"hnote\">site outage</span></td><td class=\"num\">—<span class=\"dim\">no payout</span></td>";
       var first = hall.querySelector("tr[data-wk]");
-      if (first) hall.insertBefore(row, first);
-      else hall.appendChild(row);
+      if (first && first.parentNode) first.parentNode.insertBefore(row, first);
+      else (hall.querySelector("tbody") || hall).appendChild(row);
     });
   }
   function syncNav(b) {

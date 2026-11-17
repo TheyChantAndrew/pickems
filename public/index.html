@@ -314,7 +314,7 @@ document.addEventListener('pickems:board',function(ev){var b=ev.detail||{},st=b.
  var sc=document.getElementById('status-card');
  if(sc&&typeof st.submit_open==='boolean')sc.setAttribute('data-submit',st.submit_open?'open':'closed');   // CTA pulse gate (CSS), no-op if no CTA was rendered
  if(sc&&sc.getAttribute('data-locked')==='true'&&st.sunday_final){try{var rk='pickems-reveal-'+b.week;if(!sessionStorage.getItem(rk)){sessionStorage.setItem(rk,'1');location.reload();return;}}catch(e){}}
- var lg=document.getElementById('live-games');if(lg)lg.innerHTML=(st.live_games||[]).map(function(g){return '<div class="lg"><b>'+esc(g.away)+' '+esc(g.away_score)+' – '+esc(g.home_score)+' '+esc(g.home)+'</b> <span class="clk">'+esc(g.clock||'LIVE')+'</span></div>';}).join('');
+ var lg=document.getElementById('live-games');if(lg)lg.innerHTML=(st.live_games||[]).map(function(g){var nums=g.away_score!=null&&g.home_score!=null;return '<div class="lg"><b>'+esc(g.away)+(nums?' '+esc(g.away_score):'')+' – '+(nums?esc(g.home)+' '+esc(g.home_score):esc(g.home))+'</b> <span class="clk">'+esc(g.clock||'LIVE')+'</span></div>';}).join('');
  q('[data-hook="games-final"]').forEach(function(e){e.textContent=st.games_final;});
  q('[data-hook="of"]').forEach(function(e){e.hidden=!st.games_final;});
  var ll=document.getElementById('lock-lbl');if(ll)ll.textContent=st.next_lock_iso?(st.state==='open'?'Picks lock':'Next lock'):'';
@@ -336,7 +336,7 @@ document.addEventListener('pickems:board',function(ev){var b=ev.detail||{},st=b.
   if(g.hidden){th.textContent='🔒 MNF';return;}
   var n=String(g.score||'').replace(/\(.*?\)/g,'').match(/\b\d{1,3}\b/g)||[],sc=n.length>1?n[0]+'–'+n[1]:esc(g.score||'');
   if(g.status==='final')th.textContent=sc+' F';
-  else if(g.status==='live'){th.innerHTML=sc+' <b class="live">'+esc(g.clock||'LIVE')+'</b>';}
+  else if(g.status==='live'){var line=g.away_score!=null&&g.home_score!=null?esc(g.away_score)+'–'+esc(g.home_score):'';th.innerHTML=(line?line+' ':'')+'<b class="live">'+esc(g.clock||'LIVE')+'</b>';}
   else th.textContent=th.parentNode.getAttribute('data-when')||th.textContent;});
 });})();
 </script>

@@ -160,7 +160,14 @@
       th.appendChild(document.createTextNode(g.matchup || g.key));
       var sub = document.createElement("div");
       sub.className = "sub";
-      sub.textContent = (g.status === "final" && g.score) ? (g.score + " F") : (g.when || "");
+      if (g.status === "final" && g.score) sub.textContent = g.score + " F";
+      else if (g.status === "live") {
+        if (g.away_score != null && g.home_score != null) sub.appendChild(document.createTextNode(g.away_score + "–" + g.home_score + " "));
+        var clk = document.createElement("b");
+        clk.className = "live";
+        clk.textContent = g.clock || "LIVE";
+        sub.appendChild(clk);
+      } else sub.textContent = g.when || "";
       th.appendChild(sub);
       thead.appendChild(th);
     });

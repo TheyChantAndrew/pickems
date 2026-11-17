@@ -8,6 +8,9 @@ const {revealIfReady} = require('../lib/schedule');
 const weeks = {
   8: fs.readFileSync(path.join(__dirname, '../data/week8.json'), 'utf8'),
   9: fs.readFileSync(path.join(__dirname, '../data/week9.json'), 'utf8'),
+  5: JSON.stringify({week: 5, year: 2026, sunday_final: true, games: [{matchup: 'TB @ DAL', away: 'TB', home: 'DAL', away_team: 'TB', home_team: 'DAL', kickoff: '2026-10-09T00:15:00Z', kickoff_label: 'Thu', is_monday: false}]}),
+  6: JSON.stringify({week: 6, year: 2026, sunday_final: true, games: [{matchup: 'SEA @ DEN', away: 'SEA', home: 'DEN', away_team: 'SEA', home_team: 'DEN', kickoff: '2026-10-16T00:15:00Z', kickoff_label: 'Thu', is_monday: false}]}),
+  7: JSON.stringify({week: 7, year: 2026, sunday_final: true, games: [{matchup: 'NE @ CHI', away: 'NE', home: 'CHI', away_team: 'NE', home_team: 'CHI', kickoff: '2026-10-23T00:15:00Z', kickoff_label: 'Thu', is_monday: false}]}),
   10: JSON.stringify({
     week: 10, year: 2026, entry_fee: 10, open: true, sunday_final: false,
     games: [
@@ -59,7 +62,7 @@ function entry(week) {
     void: 0, void_at: null, source: 'web', notes: '', version: 1,
     created_at: '2026-11-10T00:00:00Z', updated_at: '2026-11-10T00:00:00Z'};
 }
-const entries = [8, 9, 10, 12, 13, 14, 15].map(entry);
+const entries = [5, 6, 7, 8, 9, 10, 12, 13, 14, 15].map(entry);
 
 const db = {
   async execute(q) {
@@ -87,6 +90,29 @@ let fetchMode = 'final';
 global.fetch = async () => {
   if (fetchMode === 'throw') throw new Error('espn down');
   if (fetchMode === 'hang') return new Promise(() => {});
+  if (fetchMode === 'stale') {
+    return {ok: true, async json() {
+      return {events: [{competitions: [{competitors: [
+        {homeAway: 'away', team: {abbreviation: 'TB'}, score: '17'},
+        {homeAway: 'home', team: {abbreviation: 'DAL'}, score: '14'}
+      ]}], status: {type: {state: 'in', completed: false, shortDetail: '3rd 4:12'}}}]};
+    }};
+  }
+  if (fetchMode === 'live' || fetchMode === 'live-missing') {
+    const missing = fetchMode === 'live-missing';
+    return {ok: true, async json() {
+      return {events: [
+        {competitions: [{competitors: [
+          {homeAway: 'away', team: {abbreviation: 'PIT'}, score: missing ? '' : '17'},
+          {homeAway: 'home', team: {abbreviation: 'CIN'}, score: missing ? null : '14'}
+        ]}], status: {type: {state: 'in', completed: false, shortDetail: '3rd 4:12'}}},
+        {competitions: [{competitors: [
+          {homeAway: 'away', team: {abbreviation: 'LAC'}, score: '0'},
+          {homeAway: 'home', team: {abbreviation: 'BAL'}, score: '0'}
+        ]}], status: {type: {state: 'pre', completed: false, shortDetail: 'Mon'}}}
+      ]};
+    }};
+  }
   const wd = parsed[fetchMode] || parsed[10];
   return {ok: true, async json() {
     return {events: wd.games.map(g => ({
@@ -206,4 +232,52 @@ test('board stays 200 for weeks 8, 9, and 10, reveals Monday, and hides it if ES
   assert.equal(bad.body.degraded, true);
   assert.equal(bad.body.week, 15);
   assert.notEqual(bad.body.code, 'ERR');
+
+  for (const week of [5, 6, 7, 8, 9, 10]) {
+    if (!parsed[week]) continue;
+    fetchMode = String(week);
+    const res = await call(board, '/api/games?board=1&week=' + week);
+    assert.equal(res.status, 200, 'week ' + week);
+    assert.ok(res.body.players.length >= 1);
+  }
+
+  fetchMode = 'live';
+  const live = await call(board, '/api/games?board=1&week=10');
+  assert.equal(live.status, 200);
+  assert.equal(live.body.players.length, 1);
+  const pit = live.body.games.find(g => g.matchup === 'PIT @ CIN');
+  assert.equal(pit.status, 'live');
+  assert.equal(pit.away_score, 17);
+  assert.equal(pit.home_score, 14);
+  assert.equal(pit.score, 'PIT 17 – CIN 14');
+  assert.equal(pit.clock, 'Q3 4:12');
+  assert.equal(live.body.status.live_games[0].away_score, 17);
+  assert.equal(live.body.status.live_games[0].home_score, 14);
+  const scheduled = live.body.games.find(g => g.matchup === 'LAC @ BAL');
+  assert.equal(scheduled.status, 'pre');
+  assert.equal(scheduled.score, null);
+
+  fetchMode = 'stale';
+  const past = await call(board, '/api/games?board=1&week=5');
+  assert.equal(past.status, 200);
+  assert.equal(past.body.players.length, 1);
+  assert.equal(past.body.games[0].status, 'pre');
+  assert.equal(past.body.games[0].score, null);
+  assert.equal(past.body.status.live_games.length, 0);
+  fetchMode = '5';
+  const pastFinal = await call(board, '/api/games?board=1&week=5');
+  assert.equal(pastFinal.status, 200);
+  assert.equal(pastFinal.body.games[0].status, 'final');
+  assert.equal(pastFinal.body.games[0].score, 'TB 21 – DAL 17');
+
+  fetchMode = 'live-missing';
+  const blank = await call(board, '/api/games?board=1&week=10');
+  assert.equal(blank.status, 200);
+  const nosc = blank.body.games.find(g => g.matchup === 'PIT @ CIN');
+  assert.equal(nosc.status, 'live');
+  assert.equal(nosc.away_score, null);
+  assert.equal(nosc.home_score, null);
+  assert.equal(nosc.score, null);
+  assert.equal(blank.body.status.live_games[0].away_score, undefined);
+  assert.equal(blank.body.players.length, 1);
 });

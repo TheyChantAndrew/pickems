@@ -60,7 +60,10 @@ async function fetchEspnRaw(year, week, timeoutMs) {
         const c = ev.competitions[0], st = ev.status.type, sc = {}, ks = [];
         c.competitors.forEach(x => {
           let a = String(x.team.abbreviation); a = FIX[a] || a;
-          const v = parseInt(x.score, 10); sc[a] = isFinite(v) ? v : 0; ks.push(a);
+          const raw = x.score;
+          const v = parseInt(raw, 10);
+          sc[a] = (raw == null || raw === '' || !isFinite(v)) ? null : v;
+          ks.push(a);
         });
         if (ks.length === 2) games[ks.slice().sort().join('|')] = {sc, state: String(st.state || ''), done: st.completed !== false, detail: String(st.shortDetail || '')};
       } catch (e) { /* skip */ }
@@ -70,26 +73,31 @@ async function fetchEspnRaw(year, week, timeoutMs) {
   finally { clearTimeout(to); }
 }
 
-function buildGames(wd, espn) {
+function buildGames(wd, espn, allowLive) {
   const sundayFinal = !!wd.sunday_final;
   return (wd.games || []).map(g => {
     const key = gameKey(g);
     const hidden = g.is_monday && !sundayFinal;
     const pair = [g.away, g.home].sort().join('|');
     const e = espn && espn[pair];
-    let status = 'pre', score = null, winner = null, clock = null;
-    if (e && e.sc && e.sc[g.away] != null && e.sc[g.home] != null) {
-      const A = e.sc[g.away], H = e.sc[g.home];
-      const line = g.away + ' ' + A + ' – ' + g.home + ' ' + H;
-      if (e.state === 'post' && e.done) {
-        status = 'final'; score = line;
+    let status = 'pre', score = null, winner = null, clock = null, away_score = null, home_score = null;
+    try {
+      const A = e && e.sc ? e.sc[g.away] : null, H = e && e.sc ? e.sc[g.home] : null;
+      const have = A != null && H != null;
+      if (e && e.state === 'post' && e.done && have) {
+        status = 'final'; score = g.away + ' ' + A + ' – ' + g.home + ' ' + H;
         winner = A > H ? g.away_team : H > A ? g.home_team : 'TIE';
-      } else if (e.state === 'in') {
-        status = 'live'; score = line + ' (' + e.detail + ')'; clock = normClock(e.detail);
+        away_score = A; home_score = H;
+      } else if (allowLive && e && e.state === 'in') {
+        status = 'live'; clock = normClock(e.detail);
+        if (have) {
+          away_score = A; home_score = H;
+          score = g.away + ' ' + A + ' – ' + g.home + ' ' + H;
+        }
       }
-    }
+    } catch (err) { /* missing score: leave the game scheduled */ }
     return {key, matchup: g.matchup, away: g.away, home: g.home, when: g.kickoff_label, hidden,
-            status, score, winner, clock, is_monday: !!g.is_monday};
+            status, score, winner, clock, away_score, home_score, is_monday: !!g.is_monday};
   });
 }
 
@@ -155,7 +163,11 @@ function buildStatus(wd, games, players, nowMs, currentWeek) {
   return {
     week: wd.week, year: wd.year, state,
     next_lock_iso: L.lock_at, next_game: null,
-    live_games: games.filter(g => g.status === 'live').map(g => ({away: g.away, home: g.home, clock: g.clock})),
+    live_games: games.filter(g => g.status === 'live').map(g => {
+      const row = {away: g.away, home: g.home, clock: g.clock};
+      if (g.away_score != null && g.home_score != null) { row.away_score = g.away_score; row.home_score = g.home_score; }
+      return row;
+    }),
     pot, payout: pot, entries: players.length,
     leaders: leaders.map(l => ({key: l.key, name: l.name, display: l.display, score: l.score})),
     leaders_count: leaders.length,
@@ -198,7 +210,7 @@ async function board(req, res, q, nowMs) {
     // Do not reassign wd. PR #1 did `wd = ...` on a const and 500'd every loaded week.
     function pack(view, scores) {
       const entries = core.publicEntries(all.entries, view);
-      const games = buildGames(view, scores);
+      const games = buildGames(view, scores, week === cur);
       const abbr = abbrMap(view);
       const players = scorePlayers(entries, games, abbr, !!view.sunday_final);
       const status = buildStatus(view, games, players, nowMs, cur);

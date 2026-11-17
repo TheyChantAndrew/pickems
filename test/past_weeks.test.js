@@ -16,4 +16,11 @@ test('Week 9 is a bye in the viewer, and a failed refresh does not invent an emp
   assert.match(live, /weekFromLocation/);
   assert.match(live, /Full board not available for this week\./);
   assert.match(live, /hallRowFor/);
+  assert.match(html, /data-wk="10"/);
+  assert.match(html, /Nick \(Cool Cats\)/);
+  assert.match(html, /12\/14<span class="hnote">won outright<\/span>/);
+  assert.match(html, /\$60<span class="dim">6 entries<\/span>/);
+  assert.match(html, /Total paid out<\/td><td class="num cash">\$890/);
+  assert.match(live, /setAttribute\("data-wk", "10"\)/);
+  assert.match(live, /Number\(marked\[i\]\.getAttribute\("data-wk"\)\) < Number\(wk\)/);
 });

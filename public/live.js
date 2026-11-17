@@ -301,15 +301,33 @@
       var tot = hall.querySelector("tr.tot .cash");
       if (tot) tot.textContent = "$830";
     }
+    if (!hall.querySelector("[data-wk=\"10\"]")) {
+      var row10 = document.createElement("tr");
+      row10.setAttribute("data-wk", "10");
+      row10.innerHTML = "<td class=\"wk\">Wk 10</td><td class=\"who\" title=\"Nick (Cool Cats)\"><span class=\"hrow\"><span class=\"cup\" aria-hidden=\"true\">🏆</span><b class=\"nm\">Nick</b></span><span class=\"tag\">Cool Cats</span></td><td class=\"num\">12/14<span class=\"hnote\">won outright</span></td><td class=\"num cash\">$60<span class=\"dim\">6 entries</span></td>";
+      var top = hall.querySelector("tr[data-wk]") || hall.querySelector("tr.tot");
+      if (top && top.parentNode) top.parentNode.insertBefore(row10, top);
+      else (hall.querySelector("tbody") || hall).appendChild(row10);
+      var tot10 = hall.querySelector("tr.tot .cash");
+      if (tot10) tot10.textContent = "$890";
+    }
     Object.keys(BYE_WEEKS).forEach(function (wk) {
       if (hall.querySelector("[data-wk=\"" + wk + "\"]")) return;
       var row = document.createElement("tr");
       row.setAttribute("data-wk", wk);
       row.setAttribute("data-bye", "1");
       row.innerHTML = "<td class=\"wk\">Wk " + wk + "</td><td class=\"who\" title=\"Bye week\"><span class=\"hrow\"><span class=\"cup\" aria-hidden=\"true\">🏈</span><b class=\"nm\">BYE WEEK</b></span><span class=\"tag\">the whole league was on bye</span></td><td class=\"num\">—<span class=\"hnote\">site outage</span></td><td class=\"num\">—<span class=\"dim\">no payout</span></td>";
-      var first = hall.querySelector("tr[data-wk]");
-      if (first && first.parentNode) first.parentNode.insertBefore(row, first);
-      else (hall.querySelector("tbody") || hall).appendChild(row);
+      var marked = hall.querySelectorAll("tr[data-wk]");
+      var before = null;
+      for (var i = 0; i < marked.length; i++) {
+        if (Number(marked[i].getAttribute("data-wk")) < Number(wk)) { before = marked[i]; break; }
+      }
+      if (before && before.parentNode) before.parentNode.insertBefore(row, before);
+      else {
+        var totRow = hall.querySelector("tr.tot");
+        if (totRow && totRow.parentNode) totRow.parentNode.insertBefore(row, totRow);
+        else (hall.querySelector("tbody") || hall).appendChild(row);
+      }
     });
   }
   function syncNav(b) {

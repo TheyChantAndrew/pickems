@@ -137,6 +137,22 @@ function scorePlayers(entries, games, abbr, sundayFinal) {
     p.leader = rank === 1 && p.score > 0;
   });
   players.filter(p => p.void).forEach(p => { p.rank = players.length; });
+  // Disagreeing active picks on an unplayed game are split. Live stays pending; finals and hidden Mondays are unchanged.
+  const active = players.filter(p => !p.void);
+  for (const g of games) {
+    if (!g || g.hidden || g.status === 'final' || g.status === 'live') continue;
+    const chosen = new Set();
+    for (const p of active) {
+      const pk = p.picks[g.key];
+      const text = pk && pk.text != null ? String(pk.text).trim().toUpperCase() : '';
+      if (text) chosen.add(text);
+    }
+    if (chosen.size < 2) continue;
+    for (const p of players) {
+      const pk = p.picks[g.key];
+      if (pk && pk.cls === 'pick-pending') pk.cls = 'pick-split';
+    }
+  }
   return players.sort((a, b) => a.rank - b.rank || a.name.localeCompare(b.name));
 }
 

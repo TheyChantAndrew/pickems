@@ -13,6 +13,7 @@ const weeks = {
     week: 11, year: 2026, entry_fee: 10, open: true, sunday_final: false,
     games: [
       game('IND @ HOU', 'IND', 'HOU', 'Colts', 'Texans', '2026-11-20T01:15:00Z'),
+      game('DAL @ NYJ', 'DAL', 'NYJ', 'Cowboys', 'Jets', '2026-11-25T18:00:00Z'),
       game('TB @ DET', 'TB', 'DET', 'Buccaneers', 'Lions', '2026-11-23T18:00:00Z'),
       game('CIN @ WAS', 'CIN', 'WAS', 'Bengals', 'Commanders', '2026-11-24T01:15:00Z', {is_monday: true, is_tiebreaker: true})
     ]
@@ -33,8 +34,8 @@ function row(id, week, name, picks, tb) {
 }
 
 const entries = [
-  row(1, 11, 'Andy', {'IND @ HOU': 'Texans', 'TB @ DET': 'Lions', 'CIN @ WAS': 'Bengals'}, 40),
-  row(2, 11, 'Martin', {'IND @ HOU': 'Colts', 'TB @ DET': 'Buccaneers', 'CIN @ WAS': 'Commanders'}, 51),
+  row(1, 11, 'Andy', {'IND @ HOU': 'Texans', 'DAL @ NYJ': 'Jets', 'TB @ DET': 'Lions', 'CIN @ WAS': 'Bengals'}, 40),
+  row(2, 11, 'Martin', {'IND @ HOU': 'Colts', 'DAL @ NYJ': 'Cowboys', 'TB @ DET': 'Buccaneers', 'CIN @ WAS': 'Commanders'}, 51),
   row(3, 10, 'Andy', {'PIT @ CIN': 'Bengals', 'LAC @ BAL': 'Ravens'}, 42)
 ];
 
@@ -63,13 +64,16 @@ setDbForTests({
 let fetchMode = 'live-early';
 global.fetch = async () => {
   if (fetchMode === 'throw') throw new Error('espn down');
-  const events = fetchMode === 'live-early' ? [{
-    competitions: [{competitors: [
+  const events = fetchMode === 'live-early' ? [
+    {competitions: [{competitors: [
       {homeAway: 'away', team: {abbreviation: 'TB'}, score: '7'},
       {homeAway: 'home', team: {abbreviation: 'DET'}, score: '3'}
-    ]}],
-    status: {type: {state: 'in', completed: false, shortDetail: '1st 10:00'}}
-  }] : [];
+    ]}], status: {type: {state: 'in', completed: false, shortDetail: '1st 10:00'}}},
+    {competitions: [{competitors: [
+      {homeAway: 'away', team: {abbreviation: 'DAL'}, score: ''},
+      {homeAway: 'home', team: {abbreviation: 'NYJ'}, score: ''}
+    ]}], status: {type: {state: 'post', completed: false, shortDetail: 'Postponed'}}}
+  ] : [];
   return {ok: true, async json() { return {events}; }};
 };
 
@@ -88,12 +92,16 @@ test('picks stay locked until kickoff, and a started or past game is revealed', 
   setClockForTests(() => Date.parse('2026-11-20T00:00:00Z'));
   const early = await call(board, '/api/games?board=1&week=11');
   assert.equal(early.status, 200);
-  assert.equal(early.body.status.games_total, 3);
+  assert.equal(early.body.status.games_total, 4);
+  const players = JSON.stringify(early.body.players);
+  const postponed = early.body.games.find(g => g.matchup === 'DAL @ NYJ');
+  assert.equal(postponed.hidden, true);
+  assert.equal(cell(early.body, 'Andy', 'dal-nyj').text, '🔒');
+  assert.equal(players.includes('Jets'), false);
   assert.equal(early.body.games.find(g => g.matchup === 'IND @ HOU').hidden, true);
   assert.equal(cell(early.body, 'Andy', 'ind-hou').text, '🔒');
   assert.equal(cell(early.body, 'Andy', 'ind-hou').cls, 'pick-hidden');
   assert.equal(cell(early.body, 'Martin', 'ind-hou').text, '🔒');
-  const players = JSON.stringify(early.body.players);
   assert.equal(players.includes('Texans'), false);
   assert.equal(players.includes('Colts'), false);
   assert.equal(players.includes('Bengals'), false);
@@ -105,11 +113,13 @@ test('picks stay locked until kickoff, and a started or past game is revealed', 
   assert.equal(started.status, 'live');
   assert.equal(cell(early.body, 'Andy', 'tb-det').text, 'DET');
   assert.equal(cell(early.body, 'Martin', 'tb-det').text, 'TB');
-  assert.equal(cell(early.body, 'Andy', 'tb-det').cls, 'pick-pending');
+  assert.equal(cell(early.body, 'Andy', 'tb-det').cls, 'pick-split');
+  assert.equal(cell(early.body, 'Martin', 'tb-det').cls, 'pick-split');
   assert.equal(cell(early.body, 'Andy', 'cin-was').text, '🔒');
   const pub = await call(entriesApi, '/api/entries?week=11');
   assert.equal(pub.status, 200);
   assert.equal(pub.body.entries[0].picks['IND @ HOU'], undefined);
+  assert.equal(pub.body.entries[0].picks['DAL @ NYJ'], undefined);
   assert.equal(pub.body.entries[0].picks['CIN @ WAS'], undefined);
   assert.equal(pub.body.entries[0].picks['TB @ DET'], 'Lions');
   assert.equal(pub.body.entries[0].tiebreaker, undefined);

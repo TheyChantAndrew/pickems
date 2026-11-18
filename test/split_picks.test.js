@@ -128,8 +128,8 @@ test('unplayed disagreements are split, and agreement, live, final, and hidden p
   assert.equal(cell(res.body, 'Andy', 'pit-cin').cls, 'pick-win');
   assert.equal(cell(res.body, 'Martin', 'pit-cin').cls, 'pick-loss');
   assert.equal(cell(res.body, 'Ghost', 'pit-cin').cls, 'pick-loss');
-  assert.equal(cell(res.body, 'Andy', 'lac-bal').cls, 'pick-pending');
-  assert.equal(cell(res.body, 'Martin', 'lac-bal').cls, 'pick-pending');
+  assert.equal(cell(res.body, 'Andy', 'lac-bal').cls, 'pick-split');
+  assert.equal(cell(res.body, 'Martin', 'lac-bal').cls, 'pick-split');
   assert.equal(JSON.stringify(res.body.players).includes('Commanders'), false);
   assert.equal(res.body.players.find(p => p.name === 'Andy').score, 1);
 

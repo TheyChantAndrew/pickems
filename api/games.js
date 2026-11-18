@@ -139,10 +139,10 @@ function scorePlayers(entries, games, abbr, tbRevealed) {
     p.leader = rank === 1 && p.score > 0;
   });
   players.filter(p => p.void).forEach(p => { p.rank = players.length; });
-  // Split only on revealed games that have not gone live or final. Locked picks stay 🔒.
+  // Split on a revealed game that is not final yet, including one that is in progress.
   const active = players.filter(p => !p.void);
   for (const g of games) {
-    if (!g || g.hidden || g.status === 'final' || g.status === 'live') continue;
+    if (!g || g.hidden || g.status === 'final') continue;
     const chosen = new Set();
     for (const p of active) {
       const pk = p.picks[g.key];
@@ -289,5 +289,6 @@ module.exports = handler(['GET'], async (req, res, _r, now) => {
   if (!wd) return send(res, 404, {ok: false, error: `Week ${week || '?'} is not set up yet.`, code: 'WEEK'});
   wd.picks_locked = await core.getPicksLocked(db, week, wd, now);
   const n = db ? await core.countEntries(db, week) : null;
-  send(res, 200, core.publicGames(wd, week, now, n, cur));
+  const espn = await schedule.fetchEspnScores(wd.year, week, 4000);
+  send(res, 200, core.publicGames(wd, week, now, n, cur, espn));
 }, {storage: false});

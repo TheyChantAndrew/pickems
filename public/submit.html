@@ -184,7 +184,7 @@ function until(ms){const m=Math.round(ms/60000); if(m<60) return m+'m'; const h=
 const weekLocked=()=>!!srvLocked;
 const isLocked=g=>!!(weekLocked()||g.locked_srv||(g.lock_at&&now()>=Date.parse(g.lock_at)));
 const tbLocked=()=>weekLocked()||now()>=Date.parse(tbLock||0);
-const LOCKED_NOTE='<b>🔒 Picks are locked.</b> Week '+W+' submissions were closed from the admin panel. <a class="tbtn" href="./">See the board →</a>';
+const lockedNote=()=>'<b>🔒 Picks are locked.</b> Week '+W+' submissions were closed from the admin panel. <a class="tbtn" href="./">See the board →</a>';
 let state={}; try{state=JSON.parse(localStorage.getItem(LS)||'{}')}catch(_e){}
 state.picks=state.picks||{};
 const save=()=>{try{localStorage.setItem(LS,JSON.stringify(state))}catch(_e){}};
@@ -218,13 +218,17 @@ function focusFirst(){
   return true;
 }
 function msg(kind,html){summary(html,kind); $('#msg').scrollIntoView({behavior:'smooth',block:'center'});}
-function topnote(kind,html){const n=$('#topnote'); if(!n) return; if(!html){n.hidden=true; n.innerHTML=''; n.dataset.k=''; return;} if(n.dataset.k!==kind+html){n.className='topnote '+kind; n.innerHTML=html; n.dataset.k=kind+html;} n.hidden=false;}
+function topnote(kind,html){const n=$('#topnote'); if(!n) return; if(!html){n.hidden=true; n.innerHTML=''; n.className='topnote'; n.dataset.k=''; return;} if(n.dataset.k!==kind+html){n.className='topnote '+kind; n.innerHTML=html; n.dataset.k=kind+html;} n.hidden=false;}
 let groupSig='';
+let slateReady=false;   // baked Week snapshot can be stale; don't mark it closed before /api/games answers
 const tapped={};   // games tapped on THIS page view: a background refresh of the saved picks never undoes them
 function paint(){
+  if(form && !slateReady) return;
   let n=0, open=0, locked=0, next=null;
   $$('.game').forEach(el=>{
-    const g=byM[el.dataset.m], lk=!form||isLocked(g), pick=state.picks[g.matchup];
+    const g=byM[el.dataset.m];
+    if(!g){ el.remove(); return; }
+    const lk=!form||isLocked(g), pick=state.picks[g.matchup];
     el.classList.toggle('locked',!!form&&lk);
     el.querySelectorAll('.team').forEach(b=>{const on=pick===b.dataset.t; b.classList.toggle('on',on); b.setAttribute('aria-pressed',on); b.disabled=lk||(!!form&&!serverOpen);});
     const st=el.querySelector('.st'), t=Date.parse(g.lock_at)-now();
@@ -248,7 +252,7 @@ function paint(){
     $('#tb').disabled=true; $('#tbst').textContent='🔒 Locked';
     $('#cnt').textContent=n; $('#pb').style.width=(100*n/D.games.length)+'%';
     $('#go').disabled=true; $('#go').textContent='Picks locked'; $('#who').classList.add('off');
-    topnote('locked',LOCKED_NOTE);
+    topnote('locked',lockedNote());
     return;
   }
   // not locked (e.g. this device's clock ran ahead until /api/games corrected it): undo a closed paint
@@ -410,6 +414,8 @@ if(form){
     }));
     for(const k of Object.keys(byM)) delete byM[k];
     D.games.forEach(g=>{ byM[g.matchup]=g; });
+    const stale=$('#lockedgames'); if(stale) stale.innerHTML='';
+    groupSig='';
     const box=$('#games');
     box.innerHTML=D.games.map((g,i)=>cardHtml(g,i+1)).join('');
     const tot=$('#tot'); if(tot) tot.textContent=String(D.games.length);
@@ -433,12 +439,12 @@ if(form){
       if(s.tiebreaker_lock_at) tbLock=s.tiebreaker_lock_at;
       if(s.tiebreaker_locked) tbLock=new Date(0).toISOString();
       if(s.lock_at) D.lock_at=s.lock_at;
+      slateReady=true;
       paint();
-    }).catch(()=>{});
+    }).catch(()=>{ slateReady=true; paint(); });
   }
   pullGames().then(()=>refreshSaved());
   setInterval(pullGames,20000);
 }
-paint();
 })();
 </script></body></html>

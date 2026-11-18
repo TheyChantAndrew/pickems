@@ -73,13 +73,12 @@ async function fetchEspnRaw(year, week, timeoutMs) {
   finally { clearTimeout(to); }
 }
 
-function buildGames(wd, espn, allowLive) {
-  const sundayFinal = !!wd.sunday_final;
+function buildGames(wd, espn, allowLive, nowMs) {
   return (wd.games || []).map(g => {
     const key = gameKey(g);
-    const hidden = g.is_monday && !sundayFinal;
     const pair = [g.away, g.home].sort().join('|');
     const e = espn && espn[pair];
+    const hidden = !schedule.pickRevealed(g, e, nowMs);
     let status = 'pre', score = null, winner = null, clock = null, away_score = null, home_score = null;
     try {
       const A = e && e.sc ? e.sc[g.away] : null, H = e && e.sc ? e.sc[g.home] : null;
@@ -101,7 +100,7 @@ function buildGames(wd, espn, allowLive) {
   });
 }
 
-function scorePlayers(entries, games, abbr, sundayFinal) {
+function scorePlayers(entries, games, abbr, tbRevealed) {
   const players = entries.map(e => {
     const picks = {};
     let score = 0;
@@ -119,15 +118,18 @@ function scorePlayers(entries, games, abbr, sundayFinal) {
           if (cls === 'pick-win') score++;
         }
       }
-      picks[g.key] = {cls, text};
+      if (!g.hidden) picks[g.key] = {cls, text};
     }
-    if (e.tiebreaker != null && sundayFinal) {
+    for (const g of games) {
+      if (g && g.hidden) picks[g.key] = {cls: 'pick-hidden', text: '🔒'};
+    }
+    if (e.tiebreaker != null && tbRevealed) {
       picks.tb = {cls: 'pick-tb', text: String(e.tiebreaker)};
     }
     const display = e.tag ? `${e.name} (${e.tag})` : e.name;
     return {key: slug(e.name + (e.tag ? '-' + e.tag : '')), name: e.name, tag: e.tag || '', display,
             rank: 0, score, leader: false, paid: !!e.paid, void: !!e.void,
-            picks, online: true, entry: e.name, tiebreaker: e.tiebreaker};
+            picks, online: true, entry: e.name, tiebreaker: tbRevealed ? e.tiebreaker : null};
   });
   const ranked = players.filter(p => !p.void).sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
   let rank = 1;
@@ -137,7 +139,7 @@ function scorePlayers(entries, games, abbr, sundayFinal) {
     p.leader = rank === 1 && p.score > 0;
   });
   players.filter(p => p.void).forEach(p => { p.rank = players.length; });
-  // Disagreeing active picks on an unplayed game are split. Live stays pending; finals and hidden Mondays are unchanged.
+  // Split only on revealed games that have not gone live or final. Locked picks stay 🔒.
   const active = players.filter(p => !p.void);
   for (const g of games) {
     if (!g || g.hidden || g.status === 'final' || g.status === 'live') continue;
@@ -160,8 +162,8 @@ function buildStatus(wd, games, players, nowMs, currentWeek) {
   const fee = Number(wd.entry_fee || 10);
   const paid = players.filter(p => p.paid && !p.void);
   const pot = paid.length * fee;
-  const gamesFinal = games.filter(g => g.status === 'final' && !g.hidden).length;
-  const gamesTotal = games.filter(g => !g.hidden).length;
+  const gamesFinal = games.filter(g => g.status === 'final').length;
+  const gamesTotal = games.length;
   const leaders = players.filter(p => p.leader);
   const state = gamesFinal === gamesTotal && gamesTotal ? 'final' : games.some(g => g.status === 'live') ? 'live' : 'open';
   const L = core.withLocks(Object.assign({}, wd, {picks_locked: wd.picks_locked}), nowMs);
@@ -197,10 +199,10 @@ function buildStatus(wd, games, players, nowMs, currentWeek) {
   };
 }
 
-function degradedBoard(wd, week) {
+function degradedBoard(wd, week, nowMs) {
   const games = (wd.games || []).filter(g => g && g.away && g.home).map(g => ({
     key: (g.away + '-' + g.home).toLowerCase(), matchup: g.matchup, away: g.away, home: g.home,
-    when: g.kickoff_label || '', hidden: !!(g.is_monday && !wd.sunday_final), status: 'pre',
+    when: g.kickoff_label || '', hidden: !schedule.pickRevealed(g, null, nowMs), status: 'pre',
     score: null, winner: null, clock: null, is_monday: !!g.is_monday
   }));
   return {version: 1, week, year: wd.year, degraded: true,
@@ -225,10 +227,11 @@ async function board(req, res, q, nowMs) {
     const all = await core.readWithTombstones(db, week);
     // Do not reassign wd. PR #1 did `wd = ...` on a const and 500'd every loaded week.
     function pack(view, scores) {
-      const entries = core.publicEntries(all.entries, view);
-      const games = buildGames(view, scores, week === cur);
+      const revealed = schedule.revealedMatchups(view, scores, nowMs);
+      const entries = core.publicEntries(all.entries, view, revealed);
+      const games = buildGames(view, scores, week === cur, nowMs);
       const abbr = abbrMap(view);
-      const players = scorePlayers(entries, games, abbr, !!view.sunday_final);
+      const players = scorePlayers(entries, games, abbr, revealed.tiebreaker);
       const status = buildStatus(view, games, players, nowMs, cur);
       return {games, players, status, abbr};
     }
@@ -245,7 +248,7 @@ async function board(req, res, q, nowMs) {
   } catch (e) {
     console.error(e);
     if (wd) {
-      const body = degradedBoard(wd, week);
+      const body = degradedBoard(wd, week, nowMs);
       body.current_week = currentWeek;
       return send(res, 200, body, {'Cache-Control': 'no-store'});
     }

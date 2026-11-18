@@ -3,6 +3,8 @@ const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');
 const {setDbForTests} = require('../lib/db');
+const {setClockForTests} = require('../lib/handler');
+setClockForTests(() => Date.parse('2026-11-22T20:00:00Z'));
 
 function game(matchup, away, home, awayTeam, homeTeam, kickoff, monday) {
   return {matchup, away, home, away_team: awayTeam, home_team: homeTeam, kickoff, kickoff_label: monday ? 'Mon' : 'Sun', is_monday: !!monday};
@@ -105,8 +107,10 @@ test('unplayed disagreements are split, and agreement, live, final, and hidden p
   const res = await call('/api/games?board=1&week=11');
   assert.equal(res.status, 200);
   assert.equal(res.body.games.length, 8);
-  assert.equal(res.body.status.games_total, 7);
+  assert.equal(res.body.status.games_total, 8);
   assert.equal(res.body.games.find(g => g.is_monday).hidden, true);
+  assert.equal(cell(res.body, 'Andy', 'cin-was').cls, 'pick-hidden');
+  assert.equal(cell(res.body, 'Andy', 'cin-was').text, '🔒');
   assert.equal(cell(res.body, 'Andy', 'tb-det').cls, 'pick-split');
   assert.equal(cell(res.body, 'Andy', 'tb-det').text, 'DET');
   assert.equal(cell(res.body, 'Martin', 'tb-det').cls, 'pick-split');
@@ -126,7 +130,7 @@ test('unplayed disagreements are split, and agreement, live, final, and hidden p
   assert.equal(cell(res.body, 'Ghost', 'pit-cin').cls, 'pick-loss');
   assert.equal(cell(res.body, 'Andy', 'lac-bal').cls, 'pick-pending');
   assert.equal(cell(res.body, 'Martin', 'lac-bal').cls, 'pick-pending');
-  assert.equal(cell(res.body, 'Andy', 'cin-was'), undefined);
+  assert.equal(JSON.stringify(res.body.players).includes('Commanders'), false);
   assert.equal(res.body.players.find(p => p.name === 'Andy').score, 1);
 
   const past = await call('/api/games?board=1&week=5');

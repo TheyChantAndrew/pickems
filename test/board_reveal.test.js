@@ -1,5 +1,7 @@
 const {test} = require('node:test');
 const assert = require('node:assert/strict');
+const {setClockForTests} = require('../lib/handler');
+setClockForTests(() => Date.parse('2026-11-18T20:00:00Z'));
 const fs = require('fs');
 const path = require('path');
 const {setDbForTests} = require('../lib/db');
@@ -192,12 +194,13 @@ test('board stays 200 for weeks 8, 9, and 10, reveals Monday, and hides it if ES
   assert.equal(down.body.week, 10);
   assert.equal(down.body.players.length, 1);
   const hidden = down.body.games.find(g => g.is_monday);
-  assert.equal(hidden.hidden, true);
-  assert.equal(down.body.players[0].picks[hidden.key], undefined);
+  assert.equal(hidden.hidden, false);
+  assert.equal(down.body.players[0].picks[hidden.key].text, 'BAL');
+  assert.equal(down.body.status.games_total, down.body.games.length);
   const pubDown = await call(entriesApi, '/api/entries?week=10');
   assert.equal(pubDown.status, 200);
   assert.equal(pubDown.body.sunday_final, false);
-  assert.equal(pubDown.body.entries[0].picks['LAC @ BAL'], undefined);
+  assert.equal(pubDown.body.entries[0].picks['LAC @ BAL'], 'Ravens');
 
   const missing = await call(board, '/api/games?board=1&week=11');
   assert.equal(missing.status, 404);
@@ -214,16 +217,19 @@ test('board stays 200 for weeks 8, 9, and 10, reveals Monday, and hides it if ES
   assert.equal(two.status, 200);
   const mons = two.body.games.filter(g => g.is_monday);
   assert.deepEqual(mons.map(g => g.matchup), ['DAL @ PHI', 'LAC @ BAL']);
-  assert.equal(mons.every(g => g.hidden === false), true);
-  assert.equal(two.body.players[0].picks['dal-phi'].text, 'PHI');
-  assert.equal(two.body.players[0].picks['lac-bal'].text, 'BAL');
+  assert.equal(mons.every(g => g.hidden === true), true);
+  assert.equal(two.body.players[0].picks['dal-phi'].text, '🔒');
+  assert.equal(two.body.players[0].picks['lac-bal'].text, '🔒');
+  assert.equal(two.body.players[0].picks['kc-atl'].text, 'ATL');
+  assert.equal(two.body.status.games_total, two.body.games.length);
 
   fetchMode = '14';
   const feast = await call(board, '/api/games?board=1&week=14');
   assert.equal(feast.status, 200);
   const feastMon = feast.body.games.filter(g => g.is_monday);
   assert.equal(feastMon.length, 1);
-  assert.equal(feastMon[0].hidden, false);
+  assert.equal(feastMon[0].hidden, true);
+  assert.equal(feast.body.players[0].picks[feastMon[0].key].text, '🔒');
   assert.equal(feast.body.games.filter(g => !g.is_monday).length, 4);
 
   fetchMode = '15';

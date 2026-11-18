@@ -73,6 +73,11 @@ global.fetch = async () => {
       {homeAway: 'away', team: {abbreviation: 'DAL'}, score: ''},
       {homeAway: 'home', team: {abbreviation: 'NYJ'}, score: ''}
     ]}], status: {type: {state: 'post', completed: false, shortDetail: 'Postponed'}}}
+  ] : fetchMode === 'pre-missing' ? [
+    {competitions: [{competitors: [
+      {homeAway: 'away', team: {abbreviation: 'IND'}, score: '0'},
+      {homeAway: 'home', team: {abbreviation: 'HOU'}, score: '0'}
+    ]}], status: {type: {state: 'pre', shortDetail: 'Thu'}}}
   ] : [];
   return {ok: true, async json() { return {events}; }};
 };
@@ -153,4 +158,18 @@ test('picks stay locked until kickoff, and a started or past game is revealed', 
   const kept = adminEntries([{name: 'Andy', tag: 'Crew', picks: {'CIN @ WAS': 'Bengals'}, tiebreaker: 40, paid: true, void: false, source: 'web', submitted: '', updated: '', notes: ''}]);
   assert.equal(kept[0].picks['CIN @ WAS'], 'Bengals');
   assert.equal(kept[0].tiebreaker, 40);
+});
+
+test('a pre game with no completed field stays locked', async () => {
+  setClockForTests(() => Date.parse('2026-11-20T00:00:00Z'));
+  fetchMode = 'pre-missing';
+  const res = await call(board, '/api/games?board=1&week=11');
+  assert.equal(res.status, 200);
+  const hou = res.body.games.find(g => g.matchup === 'IND @ HOU');
+  assert.equal(hou.hidden, true);
+  assert.equal(hou.status, 'pre');
+  assert.equal(cell(res.body, 'Andy', 'ind-hou').text, '🔒');
+  assert.equal(JSON.stringify(res.body.players).includes('Texans'), false);
+  const pub = await call(entriesApi, '/api/entries?week=11');
+  assert.equal(pub.body.entries[0].picks['IND @ HOU'], undefined);
 });

@@ -65,7 +65,7 @@ async function fetchEspnRaw(year, week, timeoutMs) {
           sc[a] = (raw == null || raw === '' || !isFinite(v)) ? null : v;
           ks.push(a);
         });
-        if (ks.length === 2) games[ks.slice().sort().join('|')] = {sc, state: String(st.state || ''), done: st.completed !== false, detail: String(st.shortDetail || '')};
+        if (ks.length === 2) games[ks.slice().sort().join('|')] = {sc, state: String(st.state || ''), done: st.completed === true, detail: String(st.shortDetail || '')};
       } catch (e) { /* skip */ }
     });
     return games;

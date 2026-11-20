@@ -17,7 +17,7 @@
   var token = (/(?:^|[#&])k=([^&]+)/.exec(location.hash || "") || [])[1] || "";
   try { token = decodeURIComponent(token); } catch (e) { token = ""; }
   var $ = function (id) { return document.getElementById(id); };
-  var state = {week: null, fee: 10, live: false, locked: null, rows: [], paper: [], pending: 0, loadSeq: 0, del: null};
+  var state = {week: null, fee: 10, live: false, locked: null, lockSource: "open", firstStarted: false, rows: [], paper: [], pending: 0, loadSeq: 0, del: null};
 
   function nameKey(n) { return String(n == null ? "" : n).trim().toLowerCase().replace(/\s+/g, " "); }
   function slug(s) { return String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, ""); }
@@ -53,14 +53,23 @@
     var box = $("adm-lock"), cb = $("adm-lock-cb");
     if (!box || !cb) return;
     var locked = !!state.locked;
+    var source = state.lockSource || (locked ? "manual" : "open");
     box.classList.toggle("is-locked", locked);
     box.classList.toggle("is-open", state.locked === false);
+    box.classList.toggle("is-auto", source === "auto");
     cb.checked = locked;
     $("adm-lock-v").textContent = state.locked == null ? "–" : (locked ? "LOCKED" : "OPEN");
-    $("adm-lock-lbl").textContent = locked ? "LOCKED" : "OPEN";
-    $("adm-lock-s").textContent = locked
-      ? "Players cannot submit or edit picks until you unlock."
-      : "Players can submit and edit picks. Flip the switch to lock the week.";
+    $("adm-lock-lbl").textContent = state.locked == null ? "–" : (source === "auto" ? "AUTO" : (locked ? "LOCKED" : "OPEN"));
+    if (state.locked == null) $("adm-lock-s").textContent = "Loading the lock…";
+    else if (source === "auto") $("adm-lock-s").textContent = "Locked automatically at the first kickoff. Turning the switch off does not reopen the week.";
+    else if (source === "manual" && state.firstStarted) $("adm-lock-s").textContent = "You locked this week. The first kickoff has also passed, so turning the switch off does not reopen it.";
+    else if (source === "manual") $("adm-lock-s").textContent = "You locked this week early. Players cannot submit until you turn this off. The first kickoff locks it either way.";
+    else $("adm-lock-s").textContent = "Open until the first kickoff. Flip the switch to lock the week early.";
+  }
+  function takeLock(j) {
+    state.locked = !!j.picks_locked;
+    state.lockSource = j.lock_source || (state.locked ? "manual" : "open");
+    state.firstStarted = !!j.first_started;
   }
   function saveLock(want) {
     var cb = $("adm-lock-cb"), st = $("adm-lock-state");
@@ -68,7 +77,7 @@
     cb.disabled = true; st.className = "adm-state is-saving"; st.textContent = "Saving…"; state.pending++;
     api("POST", "/api/admin/paid", {week: state.week, lock: want}).then(function (j) {
       if (seq !== state.lockSeq) return;
-      state.locked = !!j.picks_locked;
+      takeLock(j);
       paintLock(); st.className = "adm-state is-saved"; st.textContent = "Saved ✓";
       setTimeout(function () { if (seq === state.lockSeq) { st.className = "adm-state"; st.textContent = ""; } }, 4000);
     }, function (e) {
@@ -356,7 +365,7 @@
       var j = res[0], b = res[1];
       if (seq !== state.loadSeq) return;
       if (!week) return load(j.week);                // first load: the server picks the current week
-      state.week = j.week; state.fee = Number(j.fee || 10); state.live = !!j.paid_live; state.del = j.delete_state || null; state.locked = !!j.picks_locked; paintLock(); paintWeekTools(j);
+      state.week = j.week; state.fee = Number(j.fee || 10); state.live = !!j.paid_live; state.del = j.delete_state || null; takeLock(j); paintLock(); paintWeekTools(j);
       var players = (b && String(b.week) === String(j.week) && b.players) || [];
       var byEntry = {}, byKey = {}, byName = {};
       players.forEach(function (p) { if (p.entry != null) byEntry[nameKey(p.entry)] = p; byKey[p.key] = p; byName[nameKey(p.name)] = p; });

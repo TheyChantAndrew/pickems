@@ -160,6 +160,24 @@ test('picks stay locked until kickoff, and a started or past game is revealed', 
   assert.equal(kept[0].tiebreaker, 40);
 });
 
+test('after the first kickoff the week is locked but later games stay hidden', async () => {
+  setClockForTests(() => Date.parse('2026-11-20T00:00:00Z'));
+  fetchMode = 'quiet';
+  const open = await call(board, '/api/games?week=11');
+  assert.equal(open.body.locked, false);
+  assert.equal(open.body.lock_at, '2026-11-20T01:15:00.000Z');
+  setClockForTests(() => Date.parse('2026-11-20T02:00:00Z'));
+  const shut = await call(board, '/api/games?week=11');
+  assert.equal(shut.body.locked, true);
+  assert.equal(shut.body.games.every(g => g.locked && g.lock_at === shut.body.lock_at), true);
+  const shown = await call(board, '/api/games?board=1&week=11');
+  assert.equal(shown.body.games.find(g => g.matchup === 'IND @ HOU').hidden, false);
+  assert.equal(cell(shown.body, 'Andy', 'ind-hou').text, 'HOU');
+  assert.equal(shown.body.games.find(g => g.matchup === 'TB @ DET').hidden, true);
+  assert.equal(cell(shown.body, 'Andy', 'tb-det').text, '🔒');
+  assert.equal(JSON.stringify(shown.body.players).includes('Lions'), false);
+});
+
 test('a pre game with no completed field stays locked', async () => {
   setClockForTests(() => Date.parse('2026-11-20T00:00:00Z'));
   fetchMode = 'pre-missing';

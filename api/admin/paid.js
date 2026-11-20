@@ -23,9 +23,10 @@ module.exports = handler(['GET', 'POST'], async (req, res, db, now) => {
                              board_names: [], delete_state: {blocked: false}, picks_locked: await core.getPicksLocked(db, week),
                              games_count: 0, missing: true, entries: []}, H);
     }
+    const flag = await core.getPicksLocked(db, week);
     return send(res, 200, {ok: true, week, current_week: cur, weeks, fee: Number(wd.entry_fee || 10),
                            paid_live: await core.paidLive(db, week), board_names: wd.board_names || [], delete_state: core.deleteState(wd, now),
-                           picks_locked: await core.getPicksLocked(db, week),
+                           picks_locked: core.withLocks(Object.assign({}, wd, {picks_locked: flag}), now).locked,
                            games_count: (wd.games || []).length, source: wd.source || 'file',
                            entries: core.paidEntries(await core.readAll(db, week))}, H);
   }

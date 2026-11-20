@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const {submit, codeHash, withLocks} = require('../lib/core');
 const {withLocks: rawLocks} = require('../lib/core_part1');
 const {tiebreakerGame, pickRevealed} = require('../lib/schedule');
+const {applyLock, getPicksLocked, setPicksLocked} = require('../lib/lock');
 
 const NOW = Date.parse('2026-11-21T18:00:00Z');
 function g(matchup, away, home, kickoff, monday) {
@@ -35,12 +36,21 @@ test('a postponed game is not started, and the tiebreaker is the last Monday gam
   assert.equal(early.tiebreaker_locked, false);
   const mid = rawLocks(wd, NOW, {'DET|TB': {state: 'in', done: false}});
   assert.equal(mid.locked, true);
+  assert.equal(mid.first_started, true);
   assert.equal(mid.games.every(x => x.locked === true), true);
   assert.equal(mid.tiebreaker_locked, true);
   assert.equal(mid.lock_at, '2026-11-20T01:15:00.000Z');
-  const unlocked = rawLocks(Object.assign({}, wd, {picks_locked: false}), NOW);
-  assert.equal(unlocked.locked, false);
-  assert.equal(unlocked.games.every(x => x.locked === false), true);
+  const storedOff = rawLocks(Object.assign({}, wd, {picks_locked: false}), NOW);
+  assert.equal(storedOff.locked, true);
+  assert.equal(storedOff.games.every(x => x.locked === true), true);
+  assert.equal(applyLock(storedOff, false).locked, true);
+  assert.equal(applyLock(storedOff, false).games.every(x => x.locked === true), true);
+  const partial = rawLocks(wd, before, {'HOU|IND': {state: 'post', done: false}, 'DET|TB': {state: 'in', done: false}});
+  assert.equal(partial.locked, false);
+  assert.equal(partial.games.find(x => x.matchup === 'IND @ HOU').locked, false);
+  assert.equal(partial.games.find(x => x.matchup === 'TB @ DET').locked, true);
+  assert.equal(partial.games.find(x => x.matchup === 'CIN @ WAS').locked, false);
+  assert.equal(applyLock(partial, false).games.find(x => x.matchup === 'TB @ DET').locked, true);
   const forced = withLocks(Object.assign({}, wd, {picks_locked: true}), before);
   assert.equal(forced.locked, true);
   assert.equal(forced.games.every(x => x.locked), true);
@@ -50,16 +60,22 @@ test('a postponed game is not started, and the tiebreaker is the last Monday gam
 function memoryDb() {
   const rows = [];
   let id = 0;
-  let weekLock = null;
+  const meta = {};
   const db = {
     rows,
-    setWeekLock(v) { weekLock = v; },
+    setWeekLock(v) {
+      const key = 'picks_lock:11';
+      if (v === true || v === '1') meta[key] = '1';
+      else if (v === false || v === '0') meta[key] = '0';
+      else delete meta[key];
+    },
     async execute(q) {
       const sql = String(q.sql || '');
       const args = q.args || [];
+      if (sql.includes('DELETE FROM meta')) { delete meta[args[0]]; return {rows: []}; }
+      if (sql.includes('INSERT INTO meta')) { meta[args[0]] = String(args[1]); return {rows: []}; }
       if (sql.includes('FROM meta') && String(args[0] || '').startsWith('picks_lock')) {
-        if (weekLock === null) return {rows: []};
-        return {rows: [{value: weekLock ? '1' : '0'}]};
+        return {rows: meta[args[0]] == null ? [] : [{value: meta[args[0]]}]};
       }
       if (sql.includes('rate_limits') && sql.includes('INSERT')) return {rows: [{count: 1}]};
       if (sql.includes('rate_limits')) return {rows: []};
@@ -114,12 +130,60 @@ test('the week stays editable before the first kickoff and closes after it', asy
   await assert.rejects(() => submit(db, wd, 11, {week: 11, name: 'Andy', tag: 'Crew', code, picks: all, tiebreaker: 42, zq7f: ''}, NOW, 'ip'),
     err => err.code === 'CLOSED');
 
-  db.setWeekLock(false);
-  const hatch = await submit(db, wd, 11, {week: 11, name: 'Bea', tag: 'Crew', picks: all, tiebreaker: 40, zq7f: ''}, NOW, 'ip');
-  assert.equal(hatch.ok, true);
-  assert.equal(hatch.picks['CIN @ WAS'], 'WAS');
+  db.setWeekLock('0');
+  await assert.rejects(() => submit(db, wd, 11, {week: 11, name: 'Bea', tag: 'Crew', picks: all, tiebreaker: 40, zq7f: ''}, NOW, 'ip'),
+    err => err.code === 'CLOSED');
 
   db.setWeekLock(true);
   await assert.rejects(() => submit(db, wd, 11, {week: 11, name: 'Cam', tag: 'Crew', picks: all, tiebreaker: 40, zq7f: ''}, before, 'ip'),
     err => err.code === 'CLOSED');
+});
+
+function scoreboard(events) {
+  global.fetch = async () => ({ok: true, async json() { return {events}; }});
+}
+function event(away, home, state, done) {
+  return {competitions: [{competitors: [
+    {team: {abbreviation: away}, score: '0'},
+    {team: {abbreviation: home}, score: '0'}
+  ]}], status: {type: {state, completed: !!done, shortDetail: state}}};
+}
+
+test('lock then unlock still auto-locks at the first kickoff, and a started game cannot be edited', async () => {
+  global.fetch = async () => { throw new Error('espn down'); };
+  const db = memoryDb();
+  const before = Date.parse('2026-11-19T00:00:00Z');
+  const all = {'IND @ HOU': 'HOU', 'TB @ DET': 'DET', 'DAL @ PHI': 'PHI', 'CIN @ WAS': 'WAS'};
+  await setPicksLocked(db, 11, true);
+  assert.equal(await getPicksLocked(db, 11), true);
+  await assert.rejects(() => submit(db, wd, 11, {week: 11, name: 'Andy', tag: 'Crew', picks: all, tiebreaker: 40, zq7f: ''}, before, 'ip'),
+    err => err.code === 'CLOSED');
+  const cleared = await setPicksLocked(db, 11, false);
+  assert.equal(cleared.picks_locked, false);
+  assert.equal(await getPicksLocked(db, 11), null);
+  db.setWeekLock('0');
+  assert.equal(await getPicksLocked(db, 11), null);
+  const created = await submit(db, wd, 11, {week: 11, name: 'Andy', tag: 'Crew', picks: all, tiebreaker: 40, zq7f: ''}, before, 'ip');
+  assert.equal(created.ok, true);
+  await assert.rejects(() => submit(db, wd, 11, {week: 11, name: 'Bea', tag: 'Crew', picks: all, tiebreaker: 40, zq7f: ''}, NOW, 'ip'),
+    err => err.code === 'CLOSED');
+
+  const code = 'WXYZ';
+  db.rows[0].edit_code_hash = codeHash(11, 'andy', code);
+  const partialAt = Date.parse('2026-11-19T12:00:00Z');
+  scoreboard([
+    event('IND', 'HOU', 'post', false),
+    event('TB', 'DET', 'in', false)
+  ]);
+  for (const flag of [null, '0', true]) {
+    db.setWeekLock(flag);
+    const changed = Object.assign({}, all, {'TB @ DET': 'TB'});
+    await assert.rejects(() => submit(db, wd, 11, {week: 11, name: 'Andy', tag: 'Crew', code, picks: changed, tiebreaker: 40, zq7f: ''}, partialAt, 'ip'),
+      err => flag === true ? err.code === 'CLOSED' : err.code === 'STARTED' && /TB @ DET/.test(err.message));
+  }
+  db.setWeekLock(null);
+  const kept = await submit(db, wd, 11, {week: 11, name: 'Andy', tag: 'Crew', code, picks: Object.assign({}, all, {'CIN @ WAS': 'CIN'}), tiebreaker: 44, zq7f: ''}, partialAt, 'ip');
+  assert.equal(kept.picks['TB @ DET'], 'DET');
+  assert.equal(kept.picks['CIN @ WAS'], 'CIN');
+  assert.equal(kept.tiebreaker, 44);
 });

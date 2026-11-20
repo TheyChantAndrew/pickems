@@ -176,21 +176,23 @@ html.theme-thanksgiving form[data-locked] .submit,html.theme-thanksgiving form[d
 let D=window.PICKEMS, W=D.week, LS='fbp_w'+W;
 const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
 const byM={}; D.games.forEach(g=>byM[g.matchup]=g);
-let tbLock=D.lock_at, serverOpen=true, srvLocked=false, skew=0;   // skew = server clock - device clock
+let tbLock=D.lock_at, serverOpen=true, srvLocked=false, tbSrv=false, serverKnown=false, skew=0;   // skew = server clock - device clock
 const now=()=>Date.now()+skew;
 const pt=new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',weekday:'short',hour:'numeric',minute:'2-digit'});
 function until(ms){const m=Math.round(ms/60000); if(m<60) return m+'m'; const h=Math.floor(m/60); if(h<48) return h+'h '+(m%60)+'m'; return Math.floor(h/24)+'d '+(h%24)+'h';}
-// The admin switch locks the whole week. Each game also locks at its own kickoff.
-const weekLocked=()=>!!srvLocked;
-const isLocked=g=>!!(weekLocked()||g.locked_srv||(g.lock_at&&now()>=Date.parse(g.lock_at)));
-const tbLocked=()=>weekLocked()||now()>=Date.parse(tbLock||0);
+// Once /api/games has answered, its locked flag is the week lock. The clock is only a fallback before that, or if the request fails.
+const timeLocked=iso=>!!(iso&&now()>=Date.parse(iso));
+const weekLocked=()=>serverKnown?!!srvLocked:timeLocked(D.lock_at);
+const isLocked=g=>!!(weekLocked()||g.locked_srv||(!serverKnown&&timeLocked(g.lock_at)));
+const tbLocked=()=>weekLocked()||(serverKnown?!!tbSrv:timeLocked(tbLock));
 const lockedNote=()=>'<b>🔒 Picks are locked.</b> Week '+W+' submissions are closed. <a class="tbtn" href="./">See the board →</a>';
 function lockOpenNote(){
   const t=Date.parse(D.lock_at);
   if(!t||isNaN(t)) return '<b>Picks are open.</b> All picks lock at the first kickoff of the week.';
-  const day=new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',weekday:'long'}).format(new Date(t));
-  const when=new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',weekday:'short',month:'numeric',day:'numeric',hour:'numeric',minute:'2-digit'}).format(new Date(t));
-  return '<b>Picks are open.</b> All picks lock at '+day+'\'s kickoff ('+when+' PT).';
+  const parts=new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',weekday:'short',month:'numeric',day:'numeric',hour:'numeric',minute:'2-digit'}).formatToParts(new Date(t));
+  const bit=k=>((parts.find(p=>p.type===k)||{}).value)||'';
+  const when=bit('weekday')+' '+bit('month')+'/'+bit('day')+', '+bit('hour')+':'+bit('minute')+' '+bit('dayPeriod');
+  return '<b>Picks are open.</b> All picks lock at the first kickoff: '+when+' PT.';
 }
 let state={}; try{state=JSON.parse(localStorage.getItem(LS)||'{}')}catch(_e){}
 state.picks=state.picks||{};
@@ -441,8 +443,8 @@ if(form){
       if(s.week!==W || slate!==mine) adoptWeek(s);
       else (s.games||[]).forEach(g=>{ const cur=byM[g.matchup]; if(cur){ cur.locked_srv=!!g.locked; if(g.lock_at) cur.lock_at=g.lock_at; } });
       serverOpen=!!s.open;
-      if(s.locked===true) srvLocked=true;
-      else if(s.locked===false) srvLocked=false;
+      if(s.locked===true||s.locked===false){ serverKnown=true; srvLocked=s.locked===true; }
+      if(typeof s.tiebreaker_locked==='boolean') tbSrv=s.tiebreaker_locked;
       if(s.tiebreaker_lock_at) tbLock=s.tiebreaker_lock_at;
       if(s.tiebreaker_locked) tbLock=new Date(0).toISOString();
       if(s.lock_at) D.lock_at=s.lock_at;

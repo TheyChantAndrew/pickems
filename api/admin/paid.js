@@ -12,21 +12,33 @@ const data = require('../../lib/data');
 const core = require('../../lib/core');
 const schedule = require('../../lib/schedule');
 const H = {'Referrer-Policy': 'no-referrer', 'X-Robots-Tag': 'noindex, nofollow'};
+
+function lockView(wd, flag, now) {
+  const manual = flag === true;
+  if (!wd || !(wd.games || []).length) {
+    return {picks_locked: manual, lock_source: manual ? 'manual' : 'open', first_started: false};
+  }
+  const L = core.withLocks(Object.assign({}, wd, {picks_locked: manual ? true : null}), now);
+  return {picks_locked: !!L.locked, lock_source: manual ? 'manual' : (L.locked ? 'auto' : 'open'), first_started: !!L.first_started};
+}
+
 module.exports = handler(['GET', 'POST'], async (req, res, db, now) => {
   await core.adminGate(db, requestToken(req, {}, false), paidTokenOk, ipHash(clientIp(req)), now);
   if (req.method === 'GET') {
     const q = query(req), cur = await data.currentWeekAsync(db);
     const week = Number(q.week || cur), wd = await data.loadWeekAsync(db, week);
     const weeks = await data.weeksAsync(db);
+    const flag = await core.getPicksLocked(db, week);
+    const view = lockView(wd, flag, now);
     if (!wd) {
       return send(res, 200, {ok: true, week, current_week: cur, weeks, fee: 10, paid_live: false,
-                             board_names: [], delete_state: {blocked: false}, picks_locked: await core.getPicksLocked(db, week),
+                             board_names: [], delete_state: {blocked: false}, picks_locked: view.picks_locked,
+                             lock_source: view.lock_source, first_started: false,
                              games_count: 0, missing: true, entries: []}, H);
     }
-    const flag = await core.getPicksLocked(db, week);
     return send(res, 200, {ok: true, week, current_week: cur, weeks, fee: Number(wd.entry_fee || 10),
                            paid_live: await core.paidLive(db, week), board_names: wd.board_names || [], delete_state: core.deleteState(wd, now),
-                           picks_locked: core.withLocks(Object.assign({}, wd, {picks_locked: flag}), now).locked,
+                           picks_locked: view.picks_locked, lock_source: view.lock_source, first_started: view.first_started,
                            games_count: (wd.games || []).length, source: wd.source || 'file',
                            entries: core.paidEntries(await core.readAll(db, week))}, H);
   }
@@ -52,7 +64,10 @@ module.exports = handler(['GET', 'POST'], async (req, res, db, now) => {
   if (!await data.loadWeekAsync(db, week)) return send(res, 404, {ok: false, error: `Week ${b.week || '?'} is not set up yet.`, code: 'WEEK'}, H);
   if (b.lock !== undefined) {
     if (b.paid !== undefined || b.void !== undefined) return send(res, 400, {ok: false, error: 'Send lock by itself.', code: 'BAD'}, H);
-    return send(res, 200, await core.setPicksLocked(db, week, b.lock), H);
+    await core.setPicksLocked(db, week, b.lock);
+    const saved = await data.loadWeekAsync(db, week);
+    const after = lockView(saved, await core.getPicksLocked(db, week), now);
+    return send(res, 200, {ok: true, week, picks_locked: after.picks_locked, lock_source: after.lock_source, first_started: after.first_started}, H);
   }
   if (b.void !== undefined && b.paid !== undefined) return send(res, 400, {ok: false, error: 'Send paid or void, not both.', code: 'BAD'}, H);
   send(res, 200, b.void !== undefined ? await core.setVoid(db, week, b.name, b.void, now) : await core.setPaid(db, week, b.name, b.paid, now), H);

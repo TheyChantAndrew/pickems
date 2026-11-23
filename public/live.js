@@ -329,6 +329,41 @@
         else (hall.querySelector("tbody") || hall).appendChild(row);
       }
     });
+    paintHallCounts(hall);
+  }
+  // ×N is the number of Hall rows for that champion. Recomputed after any insert so a new week cannot leave the older rows stale.
+  function paintHallCounts(hall) {
+    var rows = hall.querySelectorAll("tr");
+    var champs = [];
+    for (var i = 0; i < rows.length; i++) {
+      var tr = rows[i];
+      if (tr.getAttribute("data-bye") || tr.classList.contains("tot")) continue;
+      var nm = tr.querySelector("b.nm");
+      if (!nm) continue;
+      var name = String(nm.textContent || "").trim();
+      if (!name || name === "BYE WEEK") continue;
+      champs.push({nm: nm, name: name});
+    }
+    var counts = {};
+    champs.forEach(function (c) { counts[c.name] = (counts[c.name] || 0) + 1; });
+    champs.forEach(function (c) {
+      var n = counts[c.name];
+      var hrow = c.nm.parentNode;
+      var badge = hrow ? hrow.querySelector(".xw") : null;
+      if (n >= 2) {
+        if (!badge) {
+          badge = document.createElement("span");
+          badge.className = "xw";
+          c.nm.insertAdjacentText("afterend", " ");
+          c.nm.nextSibling.parentNode.insertBefore(badge, c.nm.nextSibling.nextSibling);
+        }
+        badge.textContent = "\u00d7" + n;
+      } else if (badge) {
+        var prev = badge.previousSibling;
+        if (prev && prev.nodeType === 3 && !String(prev.textContent).trim()) prev.parentNode.removeChild(prev);
+        badge.parentNode.removeChild(badge);
+      }
+    });
   }
   function syncNav(b) {
     var wk = b && b.week, cur = b && (b.current_week || b.week);

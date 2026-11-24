@@ -311,6 +311,16 @@
       var tot10 = hall.querySelector("tr.tot .cash");
       if (tot10) tot10.textContent = "$890";
     }
+    if (!hall.querySelector("[data-wk=\"11\"]")) {
+      var row11 = document.createElement("tr");
+      row11.setAttribute("data-wk", "11");
+      row11.innerHTML = "<td class=\"wk\">Wk 11</td><td class=\"who\" title=\"MRod (The one kidney man)\"><span class=\"hrow\"><span class=\"cup\" aria-hidden=\"true\">🏆</span><b class=\"nm\">MRod</b></span><span class=\"tag\">The one kidney man</span></td><td class=\"num\">10/13<span class=\"hnote\">won outright</span></td><td class=\"num cash\">$60<span class=\"dim\">7 entries</span></td>";
+      var top11 = hall.querySelector("tr[data-wk]") || hall.querySelector("tr.tot");
+      if (top11 && top11.parentNode) top11.parentNode.insertBefore(row11, top11);
+      else (hall.querySelector("tbody") || hall).appendChild(row11);
+      var tot11 = hall.querySelector("tr.tot .cash");
+      if (tot11) tot11.textContent = "$950";
+    }
     Object.keys(BYE_WEEKS).forEach(function (wk) {
       if (hall.querySelector("[data-wk=\"" + wk + "\"]")) return;
       var row = document.createElement("tr");
